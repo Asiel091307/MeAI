@@ -4,17 +4,17 @@ Fuente: [`spec.md`](./spec.md), [`plan.md`](./plan.md) y [`docs/constitution.md`
 
 ## 1. Base del proyecto y pruebas
 
-- [ ] T01. Inicializar la aplicación Next.js con TypeScript y pnpm, manteniendo una sola aplicación modular. **RF: RF-1–RF-9.**
+- [x] T01. Inicializar la aplicación Next.js con TypeScript y pnpm, manteniendo una sola aplicación modular. **RF: RF-1–RF-9.**
   Hecho cuando: `pnpm dev` inicia una página local sin errores.
-- [ ] T02. Configurar scripts `lint`, `typecheck` y `test` para la aplicación. **RF: RF-1–RF-9.**
+- [x] T02. Configurar scripts `lint`, `typecheck` y `test` para la aplicación. **RF: RF-1–RF-9.**
   Hecho cuando: `pnpm lint`, `pnpm typecheck` y `pnpm test` finalizan correctamente en el proyecto recién creado.
-- [ ] T03. Configurar Vitest y el script `test:integration` separado de las pruebas unitarias. **RF: RF-1–RF-9.**
+- [x] T03. Configurar Vitest y el script `test:integration` separado de las pruebas unitarias. **RF: RF-1–RF-9.**
   Hecho cuando: ambos scripts ejecutan sus respectivas pruebas de ejemplo sin conectarse a servicios externos en las unitarias.
-- [ ] T04. Configurar PostgreSQL con pgvector en Docker Compose. **RF: RF-1, RF-2, RF-3, RF-7, RF-8, RF-9.**
+- [x] T04. Configurar PostgreSQL con pgvector en Docker Compose. **RF: RF-1, RF-2, RF-3, RF-7, RF-8, RF-9.**
   Hecho cuando: la base arranca y acepta `CREATE EXTENSION vector`.
-- [ ] T05. Añadir la aplicación al mismo Docker Compose y configurar variables de entorno sin guardar secretos reales. **RF: RF-1–RF-9.**
+- [x] T05. Añadir la aplicación al mismo Docker Compose y configurar variables de entorno sin guardar secretos reales. **RF: RF-1–RF-9.**
   Hecho cuando: la aplicación se inicia desde Compose y se comunica con PostgreSQL.
-- [ ] T06. Crear el ejecutor de migraciones SQL versionadas y su prueba de integración. **RF: RF-1, RF-2, RF-3, RF-7, RF-8, RF-9.**
+- [x] T06. Crear el ejecutor de migraciones SQL versionadas y su prueba de integración. **RF: RF-1, RF-2, RF-3, RF-7, RF-8, RF-9.**
   Hecho cuando: una migración de prueba se aplica una sola vez en PostgreSQL real.
 
 ## 2. Datos y contratos básicos
