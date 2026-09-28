@@ -19,17 +19,17 @@ Fuente: [`spec.md`](./spec.md), [`plan.md`](./plan.md) y [`docs/constitution.md`
 
 ## 2. Datos y contratos básicos
 
-- [ ] T07. Crear la migración de `documents` con PDF binario, identidad, nombre, estado y error. **RF: RF-1, RF-2, RF-7.**
+- [x] T07. Crear la migración de `documents` con PDF binario, identidad, nombre, estado y error. **RF: RF-1, RF-2, RF-7.**
   Hecho cuando: una prueba de integración guarda dos PDF idénticos con identificadores distintos y lee sus bytes después.
-- [ ] T08. Crear la migración de `document_versions` y la referencia a versión activa. **RF: RF-2, RF-8, RF-9.**
+- [x] T08. Crear la migración de `document_versions` y la referencia a versión activa. **RF: RF-2, RF-8, RF-9.**
   Hecho cuando: una prueba almacena una versión activa y un intento nuevo sin sustituir la versión activa.
-- [ ] T09. Crear la migración de `chunks` con documento, versión, página, posición y texto, sin fijar aún la dimensión vectorial. **RF: RF-1, RF-2, RF-3, RF-4.**
+- [x] T09. Crear la migración de `chunks` con documento, versión, página, posición y texto, sin fijar aún la dimensión vectorial. **RF: RF-1, RF-2, RF-3, RF-4.**
   Hecho cuando: una prueba lee fragmentos con sus referencias de página y versión; no existe aún una dimensión de vector arbitraria.
-- [ ] T10. Definir tipos y contratos de persistencia sin importar React ni HTTP. **RF: RF-1, RF-2, RF-3, RF-7, RF-8, RF-9.**
+- [x] T10. Definir tipos y contratos de persistencia sin importar React ni HTTP. **RF: RF-1, RF-2, RF-3, RF-7, RF-8, RF-9.**
   Hecho cuando: los casos de uso pueden importar la persistencia sin importar `app/` ni componentes.
-- [ ] T10a. Definir contratos independientes para embeddings, OCR y generación. **RF: RF-1, RF-3, RF-4, RF-6.**
+- [x] T10a. Definir contratos independientes para embeddings, OCR y generación. **RF: RF-1, RF-3, RF-4, RF-6.**
   Hecho cuando: cada contrato se puede importar desde lógica RAG sin depender de React, HTTP ni un proveedor concreto.
-- [ ] T11. Implementar y probar el registro y lectura de PDF en PostgreSQL. **RF: RF-1, RF-7.**
+- [x] T11. Implementar y probar el registro y lectura de PDF en PostgreSQL. **RF: RF-1, RF-7.**
   Hecho cuando: una prueba de integración recupera exactamente el PDF guardado por identificador.
 - [ ] T12. Implementar y probar el listado de metadatos sin exponer el PDF binario. **RF: RF-2, RF-7.**
   Hecho cuando: la prueba devuelve nombre, estado y error de cada documento y una lista vacía cuando corresponda.

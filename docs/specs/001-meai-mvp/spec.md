@@ -181,6 +181,10 @@ Criterios de aceptación EARS:
 - Cada comportamiento nuevo o corregido tiene al menos un test automatizado y la suite completa pasa antes de integrar cambios.
 - Todos los criterios de aceptación aplicables están satisfechos.
 
+## Dependencia aprobada para RF-1 y RF-7
+
+- `pg` y sus tipos para TypeScript (`@types/pg`): cliente necesario para guardar y recuperar PDF binarios mediante consultas parametrizadas en PostgreSQL desde la aplicación. Se aprobó para evitar implementar manualmente el protocolo de conexión y para conservar SQL directo sin introducir un ORM.
+
 ## Dudas abiertas
 
 No quedan dudas funcionales pendientes para este MVP.
