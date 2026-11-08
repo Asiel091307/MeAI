@@ -37,7 +37,7 @@ export interface DocumentRepository {
   create(input: NewDocument): Promise<Document>;
   findById(id: string): Promise<Document | null>;
   list(): Promise<DocumentMetadata[]>;
-  delete(id: string): Promise<void>;
+  delete(id: string): Promise<boolean>;
 }
 
 export interface DocumentVersionRepository {

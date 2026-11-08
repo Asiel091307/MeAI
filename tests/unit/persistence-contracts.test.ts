@@ -40,7 +40,7 @@ test('a document use case can depend on persistence types without React or HTTP'
       error: document.error, activeVersionId: document.activeVersionId,
       createdAt: document.createdAt,
     }],
-    delete: async () => {},
+    delete: async () => true,
   };
   const versions: DocumentVersionRepository = {
     create: async () => version,

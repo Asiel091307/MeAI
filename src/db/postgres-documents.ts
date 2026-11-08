@@ -36,7 +36,7 @@ function toDocument(row: DocumentRow): Document {
 
 export function createPostgresDocumentRepository(
   pool: Pool,
-): Pick<DocumentRepository, 'create' | 'findById' | 'list'> {
+): Pick<DocumentRepository, 'create' | 'findById' | 'list' | 'delete'> {
   return {
     async create({ name, pdfBytes, status = 'processing', error = null }) {
       const result = await pool.query<DocumentRow>(
@@ -62,6 +62,26 @@ export function createPostgresDocumentRepository(
          FROM documents ORDER BY created_at, id`,
       );
       return result.rows.map(toDocumentMetadata);
+    },
+    async delete(id) {
+      // One transaction: either the document and everything derived from it
+      // disappear together, or nothing changes.
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        // Dependency order: chunks (text and, later, embeddings) first,
+        // then the versions that own them, then the document with its PDF.
+        await client.query('DELETE FROM chunks WHERE document_id = $1', [id]);
+        await client.query('DELETE FROM document_versions WHERE document_id = $1', [id]);
+        const result = await client.query('DELETE FROM documents WHERE id = $1', [id]);
+        await client.query('COMMIT');
+        return (result.rowCount ?? 0) > 0;
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
     },
   };
 }
