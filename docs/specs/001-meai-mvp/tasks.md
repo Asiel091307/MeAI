@@ -61,9 +61,9 @@ Fuente: [`spec.md`](./spec.md), [`plan.md`](./plan.md) y [`docs/constitution.md`
 
 ## 4. Proveedores y decisiones bloqueantes
 
-- [ ] T23. Comparar embeddings de OpenAI y Gemini con documentación oficial vigente: nivel gratuito, precio, límites, privacidad, dimensiones y calidad esperada. **RF: RF-1, RF-3.**
+- [x] T23. Comparar embeddings de OpenAI y Gemini con documentación oficial vigente: nivel gratuito, precio, límites, privacidad, dimensiones y calidad esperada. **RF: RF-1, RF-3.**
   Hecho cuando: una tabla fechada con enlaces oficiales permite comparar ambos proveedores para embeddings.
-- [ ] T23a. Comparar generación de OpenAI y Gemini con documentación oficial vigente: nivel gratuito, precio, límites, privacidad y calidad esperada. **RF: RF-4, RF-6.**
+- [x] T23a. Comparar generación de OpenAI y Gemini con documentación oficial vigente: nivel gratuito, precio, límites, privacidad y calidad esperada. **RF: RF-4, RF-6.**
   Hecho cuando: una tabla fechada con enlaces oficiales permite comparar ambos proveedores para generación.
 - [ ] T24. Presentar la comparación y registrar la elección de proveedor y modelos en una spec aprobada. **RF: RF-3, RF-4, RF-6.**
   Hecho cuando: la spec aprobada identifica por separado embeddings y generación; ninguna integración se implementa antes.
@@ -88,7 +88,7 @@ Fuente: [`spec.md`](./spec.md), [`plan.md`](./plan.md) y [`docs/constitution.md`
   Hecho cuando: una prueba de reinicio marca fallido un documento sin versión previa y restaura la versión activa anterior si existía.
 - [ ] T33. Exponer `POST /api/documents` con validaciones y respuestas acordes al resultado del registro. **RF: RF-1, RF-2.**
   Hecho cuando: pruebas de ruta comprueban `201` para registro y `400` para formato o límites inválidos.
-- [ ] T34. Exponer `GET /api/documents` sin binarios y con estado actualizado. **RF: RF-2, RF-7.**
+- [x] T34. Exponer `GET /api/documents` sin binarios y con estado actualizado. **RF: RF-2, RF-7.**
   Hecho cuando: pruebas de ruta devuelven lista vacía o documentos con estado y error vigentes.
 - [ ] T35. Mostrar la selección y subida de un PDF. **RF: RF-1.**
   Hecho cuando: una prueba de interfaz selecciona un PDF y envía la solicitud de registro.
@@ -101,9 +101,9 @@ Fuente: [`spec.md`](./spec.md), [`plan.md`](./plan.md) y [`docs/constitution.md`
 
 ## 6. Consulta semántica y respuestas fundamentadas
 
-- [ ] T38. Validar preguntas vacías, de solo espacios o de más de 1000 caracteres. **RF: RF-3.**
+- [x] T38. Validar preguntas vacías, de solo espacios o de más de 1000 caracteres. **RF: RF-3.**
   Hecho cuando: pruebas unitarias rechazan esas entradas antes de llamar a embeddings o búsqueda.
-- [ ] T39. Impedir consultas cuando no haya documentos disponibles. **RF: RF-3.**
+- [x] T39. Impedir consultas cuando no haya documentos disponibles. **RF: RF-3.**
   Hecho cuando: una prueba devuelve un mensaje en español sin invocar búsqueda.
 - [ ] T40. Consultar con pgvector los fragmentos más cercanos únicamente de versiones activas `available`. **RF: RF-3, RF-9.**
   Hecho cuando: una prueba en PostgreSQL real ordena resultados por similitud y excluye documentos `processing` y `failed`.
