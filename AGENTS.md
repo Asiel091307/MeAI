@@ -62,6 +62,12 @@ La prioridad es que cada cambio sea pequeño, comprensible y explicable para una
 6. Ejecutar formato, lint, comprobación de tipos y tests afectados.
 7. Explicar brevemente qué cambió, por qué y cómo se verificó.
 
+## Trabajo en paralelo
+
+- El MVP se desarrolla en dos carriles a la vez: carril A (Claude Code) y carril B (Antigravity).
+- Antes de cada tarea, leer `docs/coordinacion/carriles.md`: define qué archivos son de cada carril, quién marca `tasks.md`, cuándo una tarea está lista para merge y qué tests corre solo el integrador.
+- Modificar solo los archivos del propio carril; los archivos compartidos los cambia únicamente el integrador.
+
 ## Tests y calidad
 
 - Usar Vitest para tests unitarios y de integración, salvo que una spec justifique otra herramienta.
