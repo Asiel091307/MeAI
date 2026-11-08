@@ -185,6 +185,49 @@ Criterios de aceptación EARS:
 
 - `pg` y sus tipos para TypeScript (`@types/pg`): cliente necesario para guardar y recuperar PDF binarios mediante consultas parametrizadas en PostgreSQL desde la aplicación. Se aprobó para evitar implementar manualmente el protocolo de conexión y para conservar SQL directo sin introducir un ORM.
 
+## Dependencia aprobada para contar páginas y extraer texto (T14)
+
+Necesidad (RF-1, RF-2): contar las páginas de un PDF para aplicar el límite de 100 (T15), detectar PDF dañados o protegidos (T16) y extraer el texto de cada página conservando su número (T17). Node.js no incluye un lector de PDF, e implementar el formato a mano no es razonable.
+
+Comparación consultada en el registro npm el 2026-11-07:
+
+| Opción | Licencia | Node requerido | Cuenta páginas | Texto por página | Detecta dañado / protegido | Observaciones |
+| --- | --- | --- | --- | --- | --- | --- |
+| `pdfjs-dist` 5.6.205 (Mozilla, motor PDF de Firefox) | Apache-2.0 | ≥20.19 | Sí (`numPages`) | Sí (`getTextContent` por página) | Sí (`InvalidPDFException`, `PasswordException`) | Compatible con la imagen Docker actual (`node:20`). Puede representar páginas como imagen, útil para la futura decisión de OCR (T18). `@napi-rs/canvas` es opcional y solo se necesita para representar páginas. |
+| `pdfjs-dist` 6.5.438 | Apache-2.0 | ≥22.13 | Sí | Sí | Sí | Versión más reciente, pero obliga a cambiar la imagen Docker y `.node-version` de Node 20 a Node 22 o 24. |
+| `unpdf` 2.1.0 | MIT | ≥24 | Sí | Sí | Sí | Envoltorio sobre pdf.js; incompatible con Node 20 y oculta el funcionamiento interno. |
+| `pdf-parse` 2.4.5 | Apache-2.0 | ≥20.16 | Sí | Sí | Parcial | Envoltorio sobre `pdfjs-dist` 5.4.296 y añade `@napi-rs/canvas` como dependencia obligatoria; más piezas sin beneficio para el MVP. |
+| `pdf-lib` 1.17.1 | MIT | Sin requisito | Sí | No | Parcial | No extrae texto; última versión publicada en 2022. |
+
+Propuesta: añadir **`pdfjs-dist` 5.6.205** con versión fija como única dependencia para contar páginas y extraer texto. Motivos: es el motor de referencia, cubre T15, T16 y T17 con una sola librería, funciona con Node 20 sin cambiar Docker y deja visible cada paso (abrir documento, recorrer páginas, leer texto), lo que favorece el objetivo educativo. Se usará solo desde `src/rag/ingestion/`, sin importar React ni HTTP.
+
+Alternativa a decidir por el usuario: si se prefiere actualizar el proyecto a Node 22 o 24, usar `pdfjs-dist` 6.5.438; ese cambio de versión de Node requeriría su propia actualización de Docker y `.node-version`.
+
+Estado: **aprobada por el usuario el 2026-11-07**: `pdfjs-dist` 5.6.205 con versión fija. Se descarta por ahora la actualización a Node 22 o 24.
+
+## Dependencias y estrategia aprobadas para OCR de páginas escaneadas (T18)
+
+Necesidad (RF-1, RF-2): procesar páginas de PDF escaneadas donde no existe texto digital extraíble, reconociendo texto impreso en español e inglés y preservando el número de página de origen.
+
+Estrategia de OCR:
+1. **Detección selectiva:** solo se ejecuta OCR sobre las páginas cuyo texto extraído digitalmente esté vacío o contenga únicamente espacios en blanco (cumpliendo `plan.md`). Si la página ya contiene texto digital, no se procesa con OCR.
+2. **Renderizado de página a imagen:** `pdfjs-dist` requiere un contexto de dibujo en Node.js para renderizar páginas a mapa de bits. Se utiliza `@napi-rs/canvas`, que provee bindings nativos N-API precompilados de Skia para Node.js sin necesidad de herramientas de compilación C++ en el entorno host.
+3. **Reconocimiento óptico de caracteres:** la imagen generada se procesa con `tesseract.js` en WebAssembly, configurado con soporte para español (`spa`) e inglés (`eng`).
+4. **Preservación de metadatos:** el texto reconocido se asigna al número de página correspondiente y se rechaza el documento si alguna página queda ilegible o vacía (según RF-2).
+
+Comparación de opciones evaluadas el 2026-11-08:
+
+| Opción OCR | Licencia | Node requerido | Idiomas (es/en) | Dependencias nativas de SO | Observaciones |
+| --- | --- | --- | --- | --- | --- |
+| `tesseract.js` 7.0.0 + `@napi-rs/canvas` 1.1.0 | Apache-2.0 / MIT | ≥20 | Sí (`spa` + `eng`) | No (WebAssembly + prebuilt N-API) | **Recomendada.** Funciona de forma idéntica en Windows y Docker (`node:20-bookworm-slim`), sin instalar paquetes del sistema operativo. Integra con `OcrProvider`. |
+| Binario del sistema `tesseract-ocr` | Apache-2.0 | Sin requisito Node | Sí | Sí (`apt-get install tesseract-ocr tesseract-ocr-spa tesseract-ocr-eng`) | Requiere configuración en Dockerfile e instalación manual de binarios .exe en Windows. Rompe reproducibilidad en máquinas sin Docker. |
+| API en la nube (Google Cloud Vision / AWS Textract) | Comercial | Sin requisito Node | Sí | No | Requiere cuentas externas, costes económicos, credenciales y acceso constante a internet; contradice el principio educativo y offline de MeAI. |
+| Multimodal LLM (Gemini / OpenAI para OCR) | Comercial | Sin requisito Node | Sí | No | Incurre en costes elevados por token/imagen y latencia; los modelos de IA están reservados estrictamente para embeddings y generación (T23/T24). |
+
+Propuesta: aprobar **`tesseract.js` 7.0.0** y **`@napi-rs/canvas` 1.1.0** con versiones fijas en `package.json`. La lógica residirá en `src/rag/ingestion/` y proveedores en `src/rag/providers/`, sin dependencias de React ni HTTP.
+
+Estado: **aprobada el 2026-11-08**: `tesseract.js` 7.0.0 y `@napi-rs/canvas` 1.1.0 con versión fija.
+
 ## Dudas abiertas
 
 No quedan dudas funcionales pendientes para este MVP.

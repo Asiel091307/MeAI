@@ -31,24 +31,25 @@ Fuente: [`spec.md`](./spec.md), [`plan.md`](./plan.md) y [`docs/constitution.md`
   Hecho cuando: cada contrato se puede importar desde lógica RAG sin depender de React, HTTP ni un proveedor concreto.
 - [x] T11. Implementar y probar el registro y lectura de PDF en PostgreSQL. **RF: RF-1, RF-7.**
   Hecho cuando: una prueba de integración recupera exactamente el PDF guardado por identificador.
-- [ ] T12. Implementar y probar el listado de metadatos sin exponer el PDF binario. **RF: RF-2, RF-7.**
+- [x] T12. Implementar y probar el listado de metadatos sin exponer el PDF binario. **RF: RF-2, RF-7.**
   Hecho cuando: la prueba devuelve nombre, estado y error de cada documento y una lista vacía cuando corresponda.
 
 ## 3. Validación e ingestión de PDF
 
-- [ ] T13. Validar tipo PDF y límite de 10 MB antes del registro. **RF: RF-1.**
+- [x] T13. Validar tipo PDF y límite de 10 MB antes del registro. **RF: RF-1.**
   Hecho cuando: pruebas rechazan otro formato y archivos mayores de 10 MB con motivos en español sin crear documentos.
-- [ ] T14. Justificar en la spec la dependencia para contar páginas y extraer texto; agregarla solo después de su aprobación. **RF: RF-1, RF-2.**
+- [x] T14. Justificar en la spec la dependencia para contar páginas y extraer texto; agregarla solo después de su aprobación. **RF: RF-1, RF-2.**
   Hecho cuando: la decisión y la dependencia constan en la spec aprobada antes de instalarla.
-- [ ] T15. Contar páginas y rechazar PDF de más de 100 páginas sin registrarlos. **RF: RF-1.**
+- [x] T15. Contar páginas y rechazar PDF de más de 100 páginas sin registrarlos. **RF: RF-1.**
   Hecho cuando: pruebas cubren 100 páginas aceptadas y 101 rechazadas con mensaje en español.
-- [ ] T16. Registrar como fallido un PDF dañado o protegido cuyo número de páginas no pueda conocerse. **RF: RF-1, RF-2.**
+- [x] T16. Registrar como fallido un PDF dañado o protegido cuyo número de páginas no pueda conocerse. **RF: RF-1, RF-2.**
+
   Hecho cuando: la prueba conserva el documento con causa legible y sin fragmentos consultables.
-- [ ] T17. Extraer texto de PDF digitales conservando la página de cada texto. **RF: RF-1, RF-2.**
+- [x] T17. Extraer texto de PDF digitales conservando la página de cada texto. **RF: RF-1, RF-2.**
   Hecho cuando: una prueba de dos páginas devuelve texto y número de página correctos.
-- [ ] T18. Justificar y aprobar en la spec la dependencia y estrategia de OCR para texto impreso en español e inglés. **RF: RF-1, RF-2.**
+- [x] T18. Justificar y aprobar en la spec la dependencia y estrategia de OCR para texto impreso en español e inglés. **RF: RF-1, RF-2.**
   Hecho cuando: la spec aprobada identifica la solución OCR y sus dependencias antes de agregarlas.
-- [ ] T19. Reconocer texto de una página escaneada en español y otra en inglés, preservando su origen. **RF: RF-1, RF-2.**
+- [x] T19. Reconocer texto de una página escaneada en español y otra en inglés, preservando su origen. **RF: RF-1, RF-2.**
   Hecho cuando: pruebas con PDF de ejemplo reconocen texto no vacío y las páginas correctas.
 - [ ] T20. Combinar extracción y OCR solo en las páginas que lo necesiten. **RF: RF-1, RF-2.**
   Hecho cuando: una prueba de PDF mixto devuelve texto de todas las páginas en orden.

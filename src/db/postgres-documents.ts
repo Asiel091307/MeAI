@@ -1,21 +1,28 @@
 import type { Pool, QueryResultRow } from 'pg';
-import type { Document, DocumentRepository, DocumentStatus } from './contracts';
+import type {
+  Document,
+  DocumentMetadata,
+  DocumentRepository,
+  DocumentStatus,
+} from './contracts';
 
-interface DocumentRow extends QueryResultRow {
+interface DocumentMetadataRow extends QueryResultRow {
   id: string;
   name: string;
-  pdf_bytes: Buffer;
   status: DocumentStatus;
   error: string | null;
   active_version_id: string | null;
   created_at: Date;
 }
 
-function toDocument(row: DocumentRow): Document {
+interface DocumentRow extends DocumentMetadataRow {
+  pdf_bytes: Buffer;
+}
+
+function toDocumentMetadata(row: DocumentMetadataRow): DocumentMetadata {
   return {
     id: row.id,
     name: row.name,
-    pdfBytes: Uint8Array.from(row.pdf_bytes),
     status: row.status,
     error: row.error,
     activeVersionId: row.active_version_id,
@@ -23,16 +30,20 @@ function toDocument(row: DocumentRow): Document {
   };
 }
 
+function toDocument(row: DocumentRow): Document {
+  return { ...toDocumentMetadata(row), pdfBytes: Uint8Array.from(row.pdf_bytes) };
+}
+
 export function createPostgresDocumentRepository(
   pool: Pool,
-): Pick<DocumentRepository, 'create' | 'findById'> {
+): Pick<DocumentRepository, 'create' | 'findById' | 'list'> {
   return {
-    async create({ name, pdfBytes }) {
+    async create({ name, pdfBytes, status = 'processing', error = null }) {
       const result = await pool.query<DocumentRow>(
-        `INSERT INTO documents (name, pdf_bytes)
-         VALUES ($1, $2)
+        `INSERT INTO documents (name, pdf_bytes, status, error)
+         VALUES ($1, $2, $3, $4)
          RETURNING id, name, pdf_bytes, status, error, active_version_id, created_at`,
-        [name, Buffer.from(pdfBytes)],
+        [name, Buffer.from(pdfBytes), status, error],
       );
       return toDocument(result.rows[0]);
     },
@@ -43,6 +54,14 @@ export function createPostgresDocumentRepository(
         [id],
       );
       return result.rows[0] ? toDocument(result.rows[0]) : null;
+    },
+    async list() {
+      // pdf_bytes is never selected: listing exposes metadata only.
+      const result = await pool.query<DocumentMetadataRow>(
+        `SELECT id, name, status, error, active_version_id, created_at
+         FROM documents ORDER BY created_at, id`,
+      );
+      return result.rows.map(toDocumentMetadata);
     },
   };
 }

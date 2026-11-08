@@ -12,7 +12,8 @@ export interface Document {
 }
 
 export type DocumentMetadata = Omit<Document, 'pdfBytes'>;
-export type NewDocument = Pick<Document, 'name' | 'pdfBytes'>;
+export type NewDocument = Pick<Document, 'name' | 'pdfBytes'> &
+  Partial<Pick<Document, 'status' | 'error'>>;
 
 export interface DocumentVersion {
   id: string;
