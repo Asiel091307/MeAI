@@ -51,11 +51,12 @@ Fuente: [`spec.md`](./spec.md), [`plan.md`](./plan.md) y [`docs/constitution.md`
   Hecho cuando: la spec aprobada identifica la solución OCR y sus dependencias antes de agregarlas.
 - [x] T19. Reconocer texto de una página escaneada en español y otra en inglés, preservando su origen. **RF: RF-1, RF-2.**
   Hecho cuando: pruebas con PDF de ejemplo reconocen texto no vacío y las páginas correctas.
-- [ ] T20. Combinar extracción y OCR solo en las páginas que lo necesiten. **RF: RF-1, RF-2.**
+- [x] T20. Combinar extracción y OCR solo en las páginas que lo necesiten. **RF: RF-1, RF-2.**
   Hecho cuando: una prueba de PDF mixto devuelve texto de todas las páginas en orden.
 - [ ] T21. Rechazar la publicación si alguna página queda vacía o ilegible. **RF: RF-2.**
   Hecho cuando: pruebas de PDF vacío, manuscrito no reconocible y PDF parcialmente ilegible dejan el documento fallido sin fragmentos activos.
-- [ ] T22. Crear el fragmentador con tamaño y solapamiento recibidos como parámetros; conservar documento, página y posición. **RF: RF-1, RF-3, RF-4.**
+  Avance: la regla `ensureReadablePages` ya rechaza esos casos; falta guardar el estado `failed` sin fragmentos, que llega con T31.
+- [x] T22. Crear el fragmentador con tamaño y solapamiento recibidos como parámetros; conservar documento, página y posición. **RF: RF-1, RF-3, RF-4.**
   Hecho cuando: pruebas unitarias muestran que los parámetros cambian el resultado y ningún fragmento pierde su origen.
 
 ## 4. Proveedores y decisiones bloqueantes
@@ -77,7 +78,7 @@ Fuente: [`spec.md`](./spec.md), [`plan.md`](./plan.md) y [`docs/constitution.md`
 
 ## 5. Estados, publicación y listado
 
-- [ ] T29. Registrar una subida válida como `processing` y conservar duplicados independientes. **RF: RF-1, RF-2.**
+- [x] T29. Registrar una subida válida como `processing` y conservar duplicados independientes. **RF: RF-1, RF-2.**
   Hecho cuando: la prueba crea dos registros distintos para el mismo PDF y ambos comienzan en `processing`.
 - [ ] T30. Publicar atómicamente una versión completa y marcar el documento `available`. **RF: RF-2, RF-3.**
   Hecho cuando: una prueba de integración solo encuentra fragmentos consultables después de publicar toda la versión.
@@ -140,9 +141,9 @@ Fuente: [`spec.md`](./spec.md), [`plan.md`](./plan.md) y [`docs/constitution.md`
 
 ## 8. Eliminación y reprocesamiento
 
-- [ ] T54. Eliminar PDF, versiones, fragmentos, embeddings y metadatos en una transacción. **RF: RF-8.**
+- [x] T54. Eliminar PDF, versiones, fragmentos, embeddings y metadatos en una transacción. **RF: RF-8.**
   Hecho cuando: una prueba en PostgreSQL real confirma que no quedan datos asociados al documento borrado.
-- [ ] T54a. Comprobar la reversión completa de un borrado fallido. **RF: RF-8.**
+- [x] T54a. Comprobar la reversión completa de un borrado fallido. **RF: RF-8.**
   Hecho cuando: una prueba en PostgreSQL real provoca un fallo y confirma que el PDF y todos sus datos siguen intactos.
 - [ ] T55. Exponer `DELETE /api/documents/:id` con `204`, `404` y error de borrado apropiados. **RF: RF-8.**
   Hecho cuando: pruebas de ruta distinguen los tres resultados sin dar por completado un borrado fallido.
