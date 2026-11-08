@@ -8,7 +8,7 @@ Esta especificación documenta la evaluación comparativa entre **OpenAI** y **G
 2. **Generación (`AnswerGenerator`, RF-4, RF-6):** redactar respuestas en español en modo streaming utilizando **únicamente** los fragmentos recuperados como evidencia y citando sus identificadores (`chunkId`).
 
 - **Fecha de consulta de documentación oficial:** `2026-11-08`
-- **Estado de la decisión (T24):** **Pendiente de aprobación del usuario.** Ningún proveedor concreto ni dependencia de SDK se implementará ni instalará antes de que el usuario elija proveedor y modelo para cada tarea.
+- **Estado de la decisión (T24):** **Aprobada por el usuario el `2026-11-08`.**
 
 ---
 
@@ -108,8 +108,10 @@ Una vez aprobada la elección por el usuario:
 
 ## 5. Registro de decisión (T24)
 
-- **Proveedor y modelo de embeddings:** *Pendiente de decisión del usuario.*
-- **Dimensión vectorial (`pgvector`):** *Pendiente de decisión del usuario.*
-- **Proveedor y modelo de generación:** *Pendiente de decisión del usuario.*
-- **Estado:** **En espera de aprobación del usuario.**
+- **Proveedor y modelo de embeddings:** Google Gemini — `gemini-embedding-001` (`EMBEDDING_PROVIDER=gemini`, `EMBEDDING_MODEL=gemini-embedding-001`).
+- **Dimensión vectorial (`pgvector`):** `1536` dimensiones (`EMBEDDING_DIMENSIONS=1536`), aplicando normalización L2 sobre el vector devuelto cuando `outputDimensionality < 3072` y utilizando `taskType` (`RETRIEVAL_DOCUMENT` al indexar fragmentos y `RETRIEVAL_QUERY` al consultar preguntas).
+- **Proveedor y modelo de generación:** Google Gemini — `gemini-2.5-flash` / `gemini-3.5-flash-lite` (`GENERATION_PROVIDER=gemini`, `GENERATION_MODEL=gemini-2.5-flash` o `gemini-3.5-flash-lite` configurable por entorno).
+- **Cliente de integración:** `fetch` nativo de Node 20 contra la API REST oficial de Google Gemini (`https://generativelanguage.googleapis.com/v1beta/models/...`), sin añadir nuevas dependencias a `package.json`.
+- **Modalidad de coste y privacidad:** Nivel gratuito (Free Tier) de Google AI Studio para desarrollo y pruebas educativas (\$0.00 USD), con soporte transparente para nivel de pago (Paid Tier) mediante la misma variable `GEMINI_API_KEY` cuando se requiera privacidad estricta sin uso de datos para entrenamiento.
+- **Estado:** **Aprobada por el usuario el `2026-11-08`.**
 
