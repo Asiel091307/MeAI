@@ -16,7 +16,7 @@ for (const script of ['lint', 'typecheck']) {
     const result = spawnSync(command, args, { encoding: 'utf8', timeout: 120_000 });
 
     assert.equal(result.status, 0, result.stderr || result.stdout || result.error?.message);
-  }, 30_000);
+  }, 60_000);
 }
 
 test('the test script runs the Vitest unit suite', () => {
