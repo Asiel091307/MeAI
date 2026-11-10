@@ -45,7 +45,7 @@ export function setDocumentListRepositoryForTesting(
   testRepositoryOverride = repository;
 }
 
-function toPublicDocumentItem(doc: DocumentMetadata): PublicDocumentItem {
+export function toPublicDocumentItem(doc: DocumentMetadata): PublicDocumentItem {
   return {
     id: doc.id,
     name: doc.name,

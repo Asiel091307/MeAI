@@ -1,0 +1,78 @@
+import { NextResponse } from 'next/server';
+import { Pool } from 'pg';
+import type { DocumentRepository } from '../../../src/db/contracts';
+import { createPostgresDocumentRepository } from '../../../src/db/postgres-documents';
+import { registerDocument } from '../../../src/documents/register-document';
+import {
+  type PublicDocumentItem,
+  toPublicDocumentItem,
+} from './list-documents-handler';
+
+export const NO_FILE_PROVIDED_ERROR = 'No se ha proporcionado ningún archivo para registrar.';
+
+export type PostDocumentResponse =
+  | { document: PublicDocumentItem }
+  | { error: string };
+
+let defaultPool: Pool | null = null;
+let testRepositoryOverride: Pick<DocumentRepository, 'create'> | null = null;
+
+function getDefaultDocumentCreateRepository(): Pick<DocumentRepository, 'create'> {
+  if (testRepositoryOverride) {
+    return testRepositoryOverride;
+  }
+  if (!defaultPool) {
+    defaultPool = new Pool({
+      host: process.env.DB_HOST ?? '127.0.0.1',
+      port: Number(process.env.DB_PORT ?? 5432),
+      database: process.env.DB_NAME ?? 'meai',
+      user: process.env.DB_USER ?? 'meai',
+      password: process.env.DB_PASSWORD ?? process.env.POSTGRES_PASSWORD,
+    });
+  }
+  return createPostgresDocumentRepository(defaultPool);
+}
+
+export function setDocumentPostRepositoryForTesting(
+  repository: Pick<DocumentRepository, 'create'> | null,
+): void {
+  testRepositoryOverride = repository;
+}
+
+export function createPostDocumentHandler(documents: Pick<DocumentRepository, 'create'>) {
+  return async function handlePostDocument(request: Request): Promise<NextResponse<PostDocumentResponse>> {
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+    } catch {
+      return NextResponse.json({ error: NO_FILE_PROVIDED_ERROR }, { status: 400 });
+    }
+
+    const file = formData.get('file') ?? formData.get('pdf');
+    if (!file || typeof file === 'string' || typeof (file as Blob).arrayBuffer !== 'function') {
+      return NextResponse.json({ error: NO_FILE_PROVIDED_ERROR }, { status: 400 });
+    }
+
+    const name = (file as File).name || 'documento.pdf';
+    const buffer = await (file as Blob).arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+
+    const result = await registerDocument(documents, { name, bytes });
+    if (!result.registered) {
+      return NextResponse.json({ error: result.reason }, { status: 400 });
+    }
+
+    return NextResponse.json(
+      { document: toPublicDocumentItem(result.document) },
+      { status: 201 },
+    );
+  };
+}
+
+export async function handleDefaultPostDocument(
+  request: Request,
+): Promise<NextResponse<PostDocumentResponse>> {
+  const repository = getDefaultDocumentCreateRepository();
+  return createPostDocumentHandler(repository)(request);
+}
+
