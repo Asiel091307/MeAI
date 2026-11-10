@@ -53,9 +53,8 @@ Fuente: [`spec.md`](./spec.md), [`plan.md`](./plan.md) y [`docs/constitution.md`
   Hecho cuando: pruebas con PDF de ejemplo reconocen texto no vacío y las páginas correctas.
 - [x] T20. Combinar extracción y OCR solo en las páginas que lo necesiten. **RF: RF-1, RF-2.**
   Hecho cuando: una prueba de PDF mixto devuelve texto de todas las páginas en orden.
-- [ ] T21. Rechazar la publicación si alguna página queda vacía o ilegible. **RF: RF-2.**
+- [x] T21. Rechazar la publicación si alguna página queda vacía o ilegible. **RF: RF-2.**
   Hecho cuando: pruebas de PDF vacío, manuscrito no reconocible y PDF parcialmente ilegible dejan el documento fallido sin fragmentos activos.
-  Avance: la regla `ensureReadablePages` ya rechaza esos casos; falta guardar el estado `failed` sin fragmentos, que llega con T31.
 - [x] T22. Crear el fragmentador con tamaño y solapamiento recibidos como parámetros; conservar documento, página y posición. **RF: RF-1, RF-3, RF-4.**
   Hecho cuando: pruebas unitarias muestran que los parámetros cambian el resultado y ningún fragmento pierde su origen.
 
@@ -67,24 +66,24 @@ Fuente: [`spec.md`](./spec.md), [`plan.md`](./plan.md) y [`docs/constitution.md`
   Hecho cuando: una tabla fechada con enlaces oficiales permite comparar ambos proveedores para generación.
 - [x] T24. Presentar la comparación y registrar la elección de proveedor y modelos en una spec aprobada. **RF: RF-3, RF-4, RF-6.**
   Hecho cuando: la spec aprobada identifica por separado embeddings y generación; ninguna integración se implementa antes.
-- [ ] T25. Definir y documentar parámetros configurables de fragmentación y cantidad de resultados, con valores predeterminados explícitos. **RF: RF-1, RF-3.**
+- [x] T25. Definir y documentar parámetros configurables de fragmentación y cantidad de resultados, con valores predeterminados explícitos. **RF: RF-1, RF-3.**
   Hecho cuando: la spec aprobada describe los valores y una prueba verifica que pueden modificarse por configuración.
-- [ ] T26. Añadir una migración del vector con la dimensión del modelo de embeddings aprobado. **RF: RF-1, RF-3.**
+- [x] T26. Añadir una migración del vector con la dimensión del modelo de embeddings aprobado. **RF: RF-1, RF-3.**
   Hecho cuando: PostgreSQL real acepta vectores de esa dimensión y rechaza dimensiones incompatibles.
-- [ ] T27. Implementar el adaptador de embeddings elegido con configuración y credenciales por entorno. **RF: RF-1, RF-3.**
+- [x] T27. Implementar el adaptador de embeddings elegido con configuración y credenciales por entorno. **RF: RF-1, RF-3.**
   Hecho cuando: una prueba de contrato con proveedor controlado genera un vector válido sin secretos en el repositorio.
-- [ ] T28. Generar embeddings para fragmentos y guardarlos en su versión. **RF: RF-1, RF-3.**
+- [x] T28. Generar embeddings para fragmentos y guardarlos en su versión. **RF: RF-1, RF-3.**
   Hecho cuando: una prueba de integración lee los vectores junto con documento, versión y página.
 
 ## 5. Estados, publicación y listado
 
 - [x] T29. Registrar una subida válida como `processing` y conservar duplicados independientes. **RF: RF-1, RF-2.**
   Hecho cuando: la prueba crea dos registros distintos para el mismo PDF y ambos comienzan en `processing`.
-- [ ] T30. Publicar atómicamente una versión completa y marcar el documento `available`. **RF: RF-2, RF-3.**
+- [x] T30. Publicar atómicamente una versión completa y marcar el documento `available`. **RF: RF-2, RF-3.**
   Hecho cuando: una prueba de integración solo encuentra fragmentos consultables después de publicar toda la versión.
-- [ ] T31. Descartar el intento incompleto y registrar una causa comprensible al fallar la ingestión. **RF: RF-2.**
+- [x] T31. Descartar el intento incompleto y registrar una causa comprensible al fallar la ingestión. **RF: RF-2.**
   Hecho cuando: una prueba de fallo deja el documento `failed`, sin contenido parcial disponible.
-- [ ] T32. Recuperar al inicio los intentos interrumpidos sin publicar datos parciales. **RF: RF-2, RF-9.**
+- [x] T32. Recuperar al inicio los intentos interrumpidos sin publicar datos parciales. **RF: RF-2, RF-9.**
   Hecho cuando: una prueba de reinicio marca fallido un documento sin versión previa y restaura la versión activa anterior si existía.
 - [ ] T33. Exponer `POST /api/documents` con validaciones y respuestas acordes al resultado del registro. **RF: RF-1, RF-2.**
   Hecho cuando: pruebas de ruta comprueban `201` para registro y `400` para formato o límites inválidos.
