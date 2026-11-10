@@ -29,7 +29,7 @@ test('a document use case can depend on persistence types without React or HTTP'
   };
   const chunk: Chunk = {
     id: 'chunk-1', documentId: document.id, versionId: version.id,
-    page: 1, position: 1, text: 'Texto del documento',
+    page: 1, position: 1, text: 'Texto del documento', embedding: [0.1, 0.2],
   };
 
   const documents: DocumentRepository = {
@@ -44,7 +44,6 @@ test('a document use case can depend on persistence types without React or HTTP'
   };
   const versions: DocumentVersionRepository = {
     create: async () => version,
-    setActive: async () => {},
   };
   const chunks: ChunkRepository = {
     save: async () => {},

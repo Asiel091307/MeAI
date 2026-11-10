@@ -29,9 +29,10 @@ export interface Chunk {
   page: number;
   position: number;
   text: string;
+  embedding: readonly number[];
 }
 
-export type NewChunk = Pick<Chunk, 'page' | 'position' | 'text'>;
+export type NewChunk = Pick<Chunk, 'page' | 'position' | 'text' | 'embedding'>;
 
 export interface DocumentRepository {
   create(input: NewDocument): Promise<Document>;
@@ -41,11 +42,30 @@ export interface DocumentRepository {
 }
 
 export interface DocumentVersionRepository {
+  // Starts a processing attempt: a new version with status 'processing', not active yet.
   create(documentId: string): Promise<DocumentVersion>;
-  setActive(documentId: string, versionId: string): Promise<void>;
 }
 
 export interface ChunkRepository {
+  // Saves the chunks of a version that is not published yet: nobody can query them until publish.
   save(documentId: string, versionId: string, chunks: readonly NewChunk[]): Promise<void>;
   findByVersion(versionId: string): Promise<Chunk[]>;
+}
+
+export interface RecoveryResult {
+  // Documents with no previous version, now 'failed'.
+  failed: string[];
+  // Documents whose previous complete version is available again.
+  restored: string[];
+}
+
+// Moves a processing attempt to its final state. Each method is one transaction.
+export interface DocumentPublicationRepository {
+  // T30: the version becomes 'complete' and the only active one; the document becomes 'available'.
+  publish(documentId: string, versionId: string): Promise<void>;
+  // T31: discards the attempt and its chunks. Without a previous active version the document
+  // becomes 'failed' with the reason; with one, that version stays active ('available').
+  fail(documentId: string, versionId: string, reason: string): Promise<void>;
+  // T32: applies fail() to every attempt left 'processing' by an interrupted run.
+  recoverInterrupted(reason: string): Promise<RecoveryResult>;
 }

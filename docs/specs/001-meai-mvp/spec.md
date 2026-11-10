@@ -228,6 +228,24 @@ Propuesta: aprobar **`tesseract.js` 7.0.0** y **`@napi-rs/canvas` 1.1.0** con ve
 
 Estado: **aprobada el 2026-11-08**: `tesseract.js` 7.0.0 y `@napi-rs/canvas` 1.1.0 con versión fija.
 
+## Parámetros configurables del RAG (T25)
+
+Necesidad (RF-1, RF-3): el tamaño de fragmento, el solapamiento y la cantidad de resultados son parámetros experimentales. Deben tener valores predeterminados visibles y poder cambiarse sin tocar el código, para comparar resultados.
+
+| Parámetro | Variable de entorno | Valor predeterminado | Qué controla |
+| --- | --- | --- | --- |
+| Tamaño de fragmento | `CHUNK_SIZE` | `1000` caracteres | Longitud de cada fragmento. Más pequeño: búsqueda más precisa, menos contexto. Más grande: más contexto, búsqueda más difusa. |
+| Solapamiento | `CHUNK_OVERLAP` | `200` caracteres (20 %) | Texto que comparten dos fragmentos seguidos de la misma página, para no perder una frase cortada en el borde. |
+| Resultados por pregunta | `RETRIEVAL_TOP_K` | `5` fragmentos | Cuántos fragmentos se recuperan y se entregan como evidencia para responder. |
+
+Reglas:
+- Los valores predeterminados viven en `src/rag/config.ts` y en esta tabla; ambos deben coincidir.
+- Una variable vacía o ausente usa su valor predeterminado.
+- Un valor inválido detiene el arranque con un mensaje que nombra la variable: los tres deben ser enteros, `CHUNK_SIZE` y `RETRIEVAL_TOP_K` mayores que 0, `CHUNK_OVERLAP` mayor o igual que 0 y menor que `CHUNK_SIZE`.
+- El tamaño se mide en caracteres, no en tokens, para no añadir un tokenizador como dependencia. Con `gemini-embedding-001` (máximo 2048 tokens por entrada), 1000 caracteres quedan muy por debajo del límite.
+
+Estado: **aprobada por el usuario el 2026-11-09**: 1000 / 200 / 5.
+
 ## Dudas abiertas
 
 No quedan dudas funcionales pendientes para este MVP.

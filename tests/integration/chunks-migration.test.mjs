@@ -6,11 +6,13 @@ import { test } from 'vitest';
 
 const exec = promisify(execFile);
 
-test('chunks keep their document, version, page and position without a vector dimension', async () => {
+test('chunks keep their document, version, page and position, with a 1536-dimension embedding', async () => {
   const database = `meai_chunks_${randomUUID().replaceAll('-', '').slice(0, 16)}`;
   const documentId = randomUUID();
   const otherDocumentId = randomUUID();
   const versionId = randomUUID();
+  // T26 made the embedding mandatory; any valid 1536-dimension vector works here.
+  const embedding = 'array_fill(0.1::real, ARRAY[1536])::vector';
   const nextVersionId = randomUUID();
   const env = {
     ...process.env,
@@ -41,11 +43,11 @@ test('chunks keep their document, version, page and position without a vector di
        ('${nextVersionId}', '${documentId}', 'processing')`);
     await compose('exec', '-T', 'db', 'psql', '-U', 'meai', '-d', database,
       '-v', 'ON_ERROR_STOP=1', '-c',
-      `INSERT INTO chunks (document_id, version_id, page, position, text) VALUES
-       ('${documentId}', '${versionId}', 1, 1, 'Primera parte'),
-       ('${documentId}', '${versionId}', 1, 2, 'Segunda parte'),
-       ('${documentId}', '${versionId}', 2, 1, 'Otra página'),
-       ('${documentId}', '${nextVersionId}', 1, 1, 'Nuevo intento')`);
+      `INSERT INTO chunks (document_id, version_id, page, position, text, embedding) VALUES
+       ('${documentId}', '${versionId}', 1, 1, 'Primera parte', ${embedding}),
+       ('${documentId}', '${versionId}', 1, 2, 'Segunda parte', ${embedding}),
+       ('${documentId}', '${versionId}', 2, 1, 'Otra página', ${embedding}),
+       ('${documentId}', '${nextVersionId}', 1, 1, 'Nuevo intento', ${embedding})`);
 
     const output = await compose('exec', '-T', 'db', 'psql', '-U', 'meai', '-d', database,
       '-v', 'ON_ERROR_STOP=1', '-At', '-c',
@@ -64,15 +66,15 @@ test('chunks keep their document, version, page and position without a vector di
     await assert.rejects(
       compose('exec', '-T', 'db', 'psql', '-U', 'meai', '-d', database,
         '-v', 'ON_ERROR_STOP=1', '-c',
-        `INSERT INTO chunks (document_id, version_id, page, position, text)
-         VALUES ('${otherDocumentId}', '${versionId}', 1, 3, 'Origen incorrecto')`),
+        `INSERT INTO chunks (document_id, version_id, page, position, text, embedding)
+         VALUES ('${otherDocumentId}', '${versionId}', 1, 3, 'Origen incorrecto', ${embedding})`),
       /foreign key constraint/i,
     );
 
-    const vectorColumns = await compose('exec', '-T', 'db', 'psql', '-U', 'meai', '-d', database,
+    const embeddingType = await compose('exec', '-T', 'db', 'psql', '-U', 'meai', '-d', database,
       '-v', 'ON_ERROR_STOP=1', '-At', '-c',
-      "SELECT count(*) FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'chunks' AND (column_name IN ('embedding', 'vector') OR udt_name = 'vector')");
-    assert.equal(vectorColumns.trim(), '0');
+      "SELECT format_type(atttypid, atttypmod) || ' ' || attnotnull FROM pg_attribute WHERE attrelid = 'public.chunks'::regclass AND attname = 'embedding'");
+    assert.equal(embeddingType.trim(), 'vector(1536) t');
   } finally {
     await compose('exec', '-T', 'db', 'psql', '-U', 'meai', '-d', 'postgres',
       '-v', 'ON_ERROR_STOP=1', '-c', `DROP DATABASE ${database} WITH (FORCE)`);
