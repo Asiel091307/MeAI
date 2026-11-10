@@ -1,17 +1,10 @@
 // Next.js runs register() once when the server starts.
+// Next also compiles this file for the Edge runtime, which has no `fs` or `net`, so the
+// Node-only work lives in instrumentation-node.ts and is imported inside this check:
+// that way the Edge bundle never tries to include `pg`.
 export async function register(): Promise<void> {
-  if (process.env.NEXT_RUNTIME !== 'nodejs') {
-    return;
-  }
-  try {
-    const { getPool } = await import('./src/db/pool');
-    const { createPostgresPublicationRepository } = await import('./src/db/postgres-publication');
-    const { recoverInterruptedDocuments } = await import(
-      './src/documents/recover-interrupted-documents'
-    );
-    await recoverInterruptedDocuments(createPostgresPublicationRepository(getPool()));
-  } catch (error) {
-    // The server must start even if the database is not reachable yet.
-    console.error('Startup recovery of interrupted documents failed:', error);
+  if (process.env.NEXT_RUNTIME === 'nodejs') {
+    const { recoverInterruptedDocumentsAtStartup } = await import('./instrumentation-node');
+    await recoverInterruptedDocumentsAtStartup();
   }
 }

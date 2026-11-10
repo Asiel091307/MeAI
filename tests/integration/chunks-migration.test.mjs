@@ -74,7 +74,7 @@ test('chunks keep their document, version, page and position, with a 1536-dimens
     const embeddingType = await compose('exec', '-T', 'db', 'psql', '-U', 'meai', '-d', database,
       '-v', 'ON_ERROR_STOP=1', '-At', '-c',
       "SELECT format_type(atttypid, atttypmod) || ' ' || attnotnull FROM pg_attribute WHERE attrelid = 'public.chunks'::regclass AND attname = 'embedding'");
-    assert.equal(embeddingType.trim(), 'vector(1536) t');
+    assert.equal(embeddingType.trim(), 'vector(1536) true');
   } finally {
     await compose('exec', '-T', 'db', 'psql', '-U', 'meai', '-d', 'postgres',
       '-v', 'ON_ERROR_STOP=1', '-c', `DROP DATABASE ${database} WITH (FORCE)`);
