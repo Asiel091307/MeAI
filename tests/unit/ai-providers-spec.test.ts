@@ -30,12 +30,15 @@ test('spec 002 includes a dated generation comparison table for OpenAI and Gemin
   expect(content).toContain('https://ai.google.dev/gemini-api/docs/text-generation');
 });
 
-test('spec 002 keeps embeddings and generation decisions separate while awaiting user approval (T24)', async () => {
+test('spec 002 records the approved separate decisions for embeddings and generation (T24)', async () => {
   const content = await readFile(specUrl, 'utf8');
 
   expect(content).toContain('EMBEDDING_PROVIDER');
   expect(content).toContain('GENERATION_PROVIDER');
-  expect(content).toContain('Proveedor y modelo de embeddings:');
-  expect(content).toContain('Proveedor y modelo de generación:');
+  expect(content).toContain('EMBEDDING_PROVIDER=gemini');
+  expect(content).toContain('EMBEDDING_MODEL=gemini-embedding-001');
+  expect(content).toContain('EMBEDDING_DIMENSIONS=1536');
+  expect(content).toContain('GENERATION_PROVIDER=gemini');
+  expect(content).toContain('Aprobada por el usuario el `2026-11-08`');
 });
 
