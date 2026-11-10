@@ -45,5 +45,5 @@ Se propone añadir como **únicas dependencias de desarrollo (`devDependencies`)
 
 ## Estado
 
-**Pendiente de aprobación del usuario.**
+**Aprobada por el usuario el 2026-11-10:** Opción 1 (`@testing-library/react` + `happy-dom` en `devDependencies`). Pendiente de que el integrador añada las dependencias a `package.json` en `main`.
 
