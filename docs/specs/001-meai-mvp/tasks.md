@@ -65,7 +65,7 @@ Fuente: [`spec.md`](./spec.md), [`plan.md`](./plan.md) y [`docs/constitution.md`
   Hecho cuando: una tabla fechada con enlaces oficiales permite comparar ambos proveedores para embeddings.
 - [x] T23a. Comparar generación de OpenAI y Gemini con documentación oficial vigente: nivel gratuito, precio, límites, privacidad y calidad esperada. **RF: RF-4, RF-6.**
   Hecho cuando: una tabla fechada con enlaces oficiales permite comparar ambos proveedores para generación.
-- [ ] T24. Presentar la comparación y registrar la elección de proveedor y modelos en una spec aprobada. **RF: RF-3, RF-4, RF-6.**
+- [x] T24. Presentar la comparación y registrar la elección de proveedor y modelos en una spec aprobada. **RF: RF-3, RF-4, RF-6.**
   Hecho cuando: la spec aprobada identifica por separado embeddings y generación; ninguna integración se implementa antes.
 - [ ] T25. Definir y documentar parámetros configurables de fragmentación y cantidad de resultados, con valores predeterminados explícitos. **RF: RF-1, RF-3.**
   Hecho cuando: la spec aprobada describe los valores y una prueba verifica que pueden modificarse por configuración.

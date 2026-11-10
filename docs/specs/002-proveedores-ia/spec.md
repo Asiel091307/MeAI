@@ -8,7 +8,7 @@ Esta especificación documenta la evaluación comparativa entre **OpenAI** y **G
 2. **Generación (`AnswerGenerator`, RF-4, RF-6):** redactar respuestas en español en modo streaming utilizando **únicamente** los fragmentos recuperados como evidencia y citando sus identificadores (`chunkId`).
 
 - **Fecha de consulta de documentación oficial:** `2026-11-08`
-- **Estado de la decisión (T24):** **Aprobada por el usuario el `2026-11-08`.**
+- **Estado de la decisión (T24):** **Aprobada por el usuario el `2026-11-09`.**
 
 ---
 
@@ -110,8 +110,8 @@ Una vez aprobada la elección por el usuario:
 
 - **Proveedor y modelo de embeddings:** Google Gemini — `gemini-embedding-001` (`EMBEDDING_PROVIDER=gemini`, `EMBEDDING_MODEL=gemini-embedding-001`).
 - **Dimensión vectorial (`pgvector`):** `1536` dimensiones (`EMBEDDING_DIMENSIONS=1536`), aplicando normalización L2 sobre el vector devuelto cuando `outputDimensionality < 3072` y utilizando `taskType` (`RETRIEVAL_DOCUMENT` al indexar fragmentos y `RETRIEVAL_QUERY` al consultar preguntas).
-- **Proveedor y modelo de generación:** Google Gemini — `gemini-2.5-flash` / `gemini-3.5-flash-lite` (`GENERATION_PROVIDER=gemini`, `GENERATION_MODEL=gemini-2.5-flash` o `gemini-3.5-flash-lite` configurable por entorno).
+- **Proveedor y modelo de generación:** Google Gemini — `gemini-3.5-flash-lite` (`GENERATION_PROVIDER=gemini`, `GENERATION_MODEL=gemini-3.5-flash-lite`). Elegido por el usuario por ser gratuito en el Free Tier y el más rápido de las opciones comparadas. El modelo sigue siendo configurable por entorno, pero cualquier cambio requiere actualizar esta spec.
 - **Cliente de integración:** `fetch` nativo de Node 20 contra la API REST oficial de Google Gemini (`https://generativelanguage.googleapis.com/v1beta/models/...`), sin añadir nuevas dependencias a `package.json`.
-- **Modalidad de coste y privacidad:** Nivel gratuito (Free Tier) de Google AI Studio para desarrollo y pruebas educativas (\$0.00 USD), con soporte transparente para nivel de pago (Paid Tier) mediante la misma variable `GEMINI_API_KEY` cuando se requiera privacidad estricta sin uso de datos para entrenamiento.
-- **Estado:** **Aprobada por el usuario el `2026-11-08`.**
+- **Modalidad de coste y privacidad:** Nivel gratuito (Free Tier) de Google AI Studio (\$0.00 USD), aceptado por el usuario. **Riesgo aceptado (RNF-7):** en el Free Tier, Google puede usar el contenido enviado (fragmentos de los PDF y preguntas) para mejorar sus productos, con posible revisión humana. Por eso este MVP debe usarse con PDF no sensibles. Para documentos personales confidenciales, activar la facturación (Paid Tier) con la misma `GEMINI_API_KEY`; en ese nivel Google no usa los datos para entrenar modelos.
+- **Estado:** **Aprobada por el usuario el `2026-11-09`.**
 

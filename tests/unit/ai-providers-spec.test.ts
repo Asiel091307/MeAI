@@ -39,6 +39,9 @@ test('spec 002 records the approved separate decisions for embeddings and genera
   expect(content).toContain('EMBEDDING_MODEL=gemini-embedding-001');
   expect(content).toContain('EMBEDDING_DIMENSIONS=1536');
   expect(content).toContain('GENERATION_PROVIDER=gemini');
-  expect(content).toContain('Aprobada por el usuario el `2026-11-08`');
+  expect(content).toContain('GENERATION_MODEL=gemini-3.5-flash-lite');
+  expect(content).not.toContain('GENERATION_MODEL=gemini-2.5-flash');
+  expect(content).toContain('Riesgo aceptado (RNF-7)');
+  expect(content).toContain('Aprobada por el usuario el `2026-11-09`');
 });
 
