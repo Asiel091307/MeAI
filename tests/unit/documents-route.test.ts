@@ -118,8 +118,8 @@ test('GET /api/documents returns documents with current status and error without
   });
 });
 
-test('GET /api/documents route files do not contain direct SQL queries', async () => {
-  for (const file of ['route.ts', 'list-documents-handler.ts']) {
+test('document route files do not contain direct SQL queries', async () => {
+  for (const file of ['route.ts', 'list-documents-handler.ts', 'post-document-handler.ts']) {
     const source = await readFile(
       new URL(`../../app/api/documents/${file}`, import.meta.url),
       'utf8',
