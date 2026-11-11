@@ -11,6 +11,8 @@ import type { RouteContextWithId } from '../delete-document-handler';
 
 const NOT_FOUND_REASON = 'El documento no existe o ya fue eliminado.';
 const ALREADY_PROCESSING_REASON = 'El documento ya se está procesando. Espera a que termine.';
+const START_FAILED_REASON =
+  'No se pudo iniciar el reprocesamiento del documento. Inténtalo de nuevo.';
 
 let testRepositoryOverride: DocumentReprocessingRepository | null = null;
 
@@ -32,7 +34,13 @@ export function createReprocessDocumentHandler(
     const resolvedParams = await Promise.resolve(context.params);
     const documentId = resolvedParams?.id ?? '';
 
-    const started = await reprocessing.startReprocessing(documentId);
+    let started;
+    try {
+      started = await reprocessing.startReprocessing(documentId);
+    } catch (error) {
+      console.error(`Starting reprocessing of document ${documentId} failed:`, error);
+      return NextResponse.json({ error: START_FAILED_REASON }, { status: 500 });
+    }
 
     if (started === 'not_found') {
       return NextResponse.json({ error: NOT_FOUND_REASON }, { status: 404 });

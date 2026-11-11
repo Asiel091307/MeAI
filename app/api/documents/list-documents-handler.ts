@@ -13,6 +13,8 @@ import {
 export { EMPTY_DOCUMENTS_MESSAGE };
 export type { ListDocumentsResponseBody, PublicDocumentItem };
 
+export const LIST_FAILED_ERROR = 'No se pudieron cargar tus documentos. Inténtalo de nuevo.';
+
 let defaultPool: Pool | null = null;
 let testRepositoryOverride: Pick<DocumentRepository, 'list'> | null = null;
 
@@ -50,8 +52,16 @@ export function toPublicDocumentItem(doc: DocumentMetadata): PublicDocumentItem 
 }
 
 export function createGetDocumentsHandler(documents: Pick<DocumentRepository, 'list'>) {
-  return async function handleGetDocuments(): Promise<NextResponse<ListDocumentsResponseBody>> {
-    const items = await documents.list();
+  return async function handleGetDocuments(): Promise<
+    NextResponse<ListDocumentsResponseBody | { error: string }>
+  > {
+    let items;
+    try {
+      items = await documents.list();
+    } catch (error) {
+      console.error('Listing documents failed:', error);
+      return NextResponse.json({ error: LIST_FAILED_ERROR }, { status: 500 });
+    }
     const publicDocuments = items.map(toPublicDocumentItem);
 
     return NextResponse.json(
@@ -69,7 +79,9 @@ export function createGetDocumentsHandler(documents: Pick<DocumentRepository, 'l
   };
 }
 
-export async function handleDefaultGetDocuments(): Promise<NextResponse<ListDocumentsResponseBody>> {
+export async function handleDefaultGetDocuments(): Promise<
+  NextResponse<ListDocumentsResponseBody | { error: string }>
+> {
   const repository = getDefaultDocumentListRepository();
   return createGetDocumentsHandler(repository)();
 }

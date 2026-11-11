@@ -10,7 +10,7 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(): Promise<NextResponse<ListDocumentsResponseBody>> {
+export async function GET(): Promise<NextResponse<ListDocumentsResponseBody | { error: string }>> {
   return handleDefaultGetDocuments();
 }
 
