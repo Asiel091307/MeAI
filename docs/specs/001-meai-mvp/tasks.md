@@ -85,7 +85,7 @@ Fuente: [`spec.md`](./spec.md), [`plan.md`](./plan.md) y [`docs/constitution.md`
   Hecho cuando: una prueba de fallo deja el documento `failed`, sin contenido parcial disponible.
 - [x] T32. Recuperar al inicio los intentos interrumpidos sin publicar datos parciales. **RF: RF-2, RF-9.**
   Hecho cuando: una prueba de reinicio marca fallido un documento sin versión previa y restaura la versión activa anterior si existía.
-- [ ] T33. Exponer `POST /api/documents` con validaciones y respuestas acordes al resultado del registro. **RF: RF-1, RF-2.**
+- [x] T33. Exponer `POST /api/documents` con validaciones y respuestas acordes al resultado del registro. **RF: RF-1, RF-2.**
   Hecho cuando: pruebas de ruta comprueban `201` para registro y `400` para formato o límites inválidos.
 - [x] T34. Exponer `GET /api/documents` sin binarios y con estado actualizado. **RF: RF-2, RF-7.**
   Hecho cuando: pruebas de ruta devuelven lista vacía o documentos con estado y error vigentes.
@@ -95,7 +95,7 @@ Fuente: [`spec.md`](./spec.md), [`plan.md`](./plan.md) y [`docs/constitution.md`
   Hecho cuando: la interfaz muestra los documentos recibidos o invita a subir el primero si la lista está vacía.
 - [ ] T36. Reflejar las transiciones `processing` → `available`/`failed` y mostrar causas en español. **RF: RF-2, RF-7.**
   Hecho cuando: una prueba de interfaz observa cambios de estado sin recargar la página.
-- [ ] T37. Verificar persistencia del PDF y los metadatos tras reiniciar la aplicación. **RF: RF-1, RF-7.**
+- [x] T37. Verificar persistencia del PDF y los metadatos tras reiniciar la aplicación. **RF: RF-1, RF-7.**
   Hecho cuando: una prueba de integración reinicia la app y vuelve a leer el documento desde PostgreSQL.
 
 ## 6. Consulta semántica y respuestas fundamentadas
@@ -110,9 +110,9 @@ Fuente: [`spec.md`](./spec.md), [`plan.md`](./plan.md) y [`docs/constitution.md`
   Hecho cuando: una prueba de integración recupera las tres referencias junto con cada texto.
 - [ ] T42. Detener la respuesta al fallar la búsqueda y devolver un error recuperable. **RF: RF-3, RF-6.**
   Hecho cuando: una prueba verifica que el generador no se invoca y la pregunta puede reintentarse.
-- [ ] T43. Responder explícitamente en español cuando no hay evidencia suficiente, sin citas ni datos externos. **RF: RF-4.**
+- [x] T43. Responder explícitamente en español cuando no hay evidencia suficiente, sin citas ni datos externos. **RF: RF-4.**
   Hecho cuando: pruebas de contexto irrelevante no producen afirmaciones documentales ni citas.
-- [ ] T44. Implementar el adaptador de generación aprobado con instrucciones de usar solo evidencia recuperada. **RF: RF-4.**
+- [x] T44. Implementar el adaptador de generación aprobado con instrucciones de usar solo evidencia recuperada. **RF: RF-4.**
   Hecho cuando: una prueba de contrato comprueba que la petición solo incluye fragmentos vigentes y la pregunta.
 - [ ] T45. Validar citas por afirmación contra los identificadores recuperados. **RF: RF-4.**
   Hecho cuando: pruebas aceptan citas a fuentes reales y rechazan citas inventadas.
