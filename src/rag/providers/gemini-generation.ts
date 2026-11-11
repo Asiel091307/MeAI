@@ -25,21 +25,65 @@ export interface GeminiGeneratorOptions {
   fetch?: typeof fetch;
 }
 
-const CITATION_PATTERN = /\[(?:FUENTES|CITAS):\s*([^\]]+)\]/i;
+const COMPLETE_CITATION_PATTERN = /\n?\[(?:FUENTES|CITAS):\s*([^\]]*)\]/gi;
+const OPEN_CITATION_PATTERN = /\n?\[(?:FUENTES|CITAS):/i;
 
-function extractCitations(text: string, validIds: Set<string>): { cleanText: string; citations: string[] } {
-  const match = CITATION_PATTERN.exec(text);
-  if (!match) {
-    return { cleanText: text, citations: [] };
+function findTrailingPartialCitationPrefix(text: string): number {
+  const lastBracket = text.lastIndexOf('[');
+  if (lastBracket === -1) {
+    return -1;
   }
 
-  const rawCitations = match[1]
-    .split(',')
-    .map((c) => c.trim())
-    .filter((id) => validIds.has(id));
+  const tail = text.slice(lastBracket).toLowerCase();
+  if ('[fuentes:'.startsWith(tail) || '[citas:'.startsWith(tail)) {
+    return lastBracket > 0 && text[lastBracket - 1] === '\n' ? lastBracket - 1 : lastBracket;
+  }
 
-  const cleanText = text.replace(CITATION_PATTERN, '').trimEnd();
-  return { cleanText, citations: rawCitations };
+  return -1;
+}
+
+function consumeCitationList(rawList: string, validIds: Set<string>, target: string[]): void {
+  for (const item of rawList.split(',')) {
+    const id = item.trim();
+    if (validIds.has(id) && !target.includes(id)) {
+      target.push(id);
+    }
+  }
+}
+
+function drainPendingBuffer(
+  pendingBuffer: string,
+  validIds: Set<string>,
+  collectedCitations: string[],
+  isFinal: boolean,
+): { emitText: string; remainingBuffer: string } {
+  let working = pendingBuffer.replace(COMPLETE_CITATION_PATTERN, (_fullMatch, group1: string) => {
+    consumeCitationList(group1, validIds, collectedCitations);
+    return '';
+  });
+
+  const openMatch = OPEN_CITATION_PATTERN.exec(working);
+  if (openMatch) {
+    const before = working.slice(0, openMatch.index);
+    if (isFinal) {
+      const unclosedList = working.slice(openMatch.index + openMatch[0].length);
+      consumeCitationList(unclosedList, validIds, collectedCitations);
+      return { emitText: before, remainingBuffer: '' };
+    }
+    return { emitText: before, remainingBuffer: working.slice(openMatch.index) };
+  }
+
+  if (!isFinal) {
+    const partialIndex = findTrailingPartialCitationPrefix(working);
+    if (partialIndex !== -1) {
+      return {
+        emitText: working.slice(0, partialIndex),
+        remainingBuffer: working.slice(partialIndex),
+      };
+    }
+  }
+
+  return { emitText: working, remainingBuffer: '' };
 }
 
 export function createGeminiAnswerGenerator(options: GeminiGeneratorOptions = {}): AnswerGenerator {
@@ -88,64 +132,81 @@ export function createGeminiAnswerGenerator(options: GeminiGeneratorOptions = {}
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let buffer = '';
+      let sseBuffer = '';
+      let pendingTextBuffer = '';
       let accumulatedText = '';
-      const pendingTextChunks: string[] = [];
+      let emittedAnyText = false;
+      const collectedCitations: string[] = [];
+
+      const parseSseLine = (line: string): string | null => {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('data:')) return null;
+        const jsonStr = trimmed.slice(5).trim();
+        if (!jsonStr) return null;
+        try {
+          const data = JSON.parse(jsonStr);
+          return data.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
+        } catch {
+          return null;
+        }
+      };
 
       try {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() ?? '';
+          sseBuffer += decoder.decode(value, { stream: true });
+          const lines = sseBuffer.split('\n');
+          sseBuffer = lines.pop() ?? '';
 
           for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed.startsWith('data:')) continue;
-            const jsonStr = trimmed.slice(5).trim();
-            if (!jsonStr) continue;
+            const partText = parseSseLine(line);
+            if (!partText) continue;
 
-            try {
-              const data = JSON.parse(jsonStr);
-              const partText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-              if (partText) {
-                accumulatedText += partText;
-                pendingTextChunks.push(partText);
-              }
-            } catch {
-              // Ignore incomplete or unparseable SSE lines
+            accumulatedText += partText;
+            pendingTextBuffer += partText;
+
+            const drained = drainPendingBuffer(pendingTextBuffer, validIds, collectedCitations, false);
+            pendingTextBuffer = drained.remainingBuffer;
+            if (drained.emitText) {
+              emittedAnyText = true;
+              yield { type: 'text', text: drained.emitText };
             }
+          }
+        }
+
+        if (sseBuffer.trim()) {
+          const partText = parseSseLine(sseBuffer);
+          if (partText) {
+            accumulatedText += partText;
+            pendingTextBuffer += partText;
           }
         }
       } finally {
         reader.releaseLock();
       }
 
-      // Check if evidence is insufficient
+      const finalDrain = drainPendingBuffer(pendingTextBuffer, validIds, collectedCitations, true);
+      if (finalDrain.emitText) {
+        emittedAnyText = true;
+        yield { type: 'text', text: finalDrain.emitText };
+      }
+
       const isNoEvidence =
         accumulatedText.includes(NO_EVIDENCE_MESSAGE) ||
         accumulatedText.toLowerCase().includes('no contiene información suficiente') ||
         accumulatedText.toLowerCase().includes('no hay información suficiente');
 
       if (isNoEvidence) {
-        yield { type: 'text', text: NO_EVIDENCE_MESSAGE };
+        if (!emittedAnyText) {
+          yield { type: 'text', text: NO_EVIDENCE_MESSAGE };
+        }
         yield { type: 'final', citations: [] };
         return;
       }
 
-      // Extract and strip citations from emitted text
-      const { citations } = extractCitations(accumulatedText, validIds);
-
-      for (const chunk of pendingTextChunks) {
-        const cleanedChunk = chunk.replace(CITATION_PATTERN, '');
-        if (cleanedChunk) {
-          yield { type: 'text', text: cleanedChunk };
-        }
-      }
-
-      yield { type: 'final', citations };
+      yield { type: 'final', citations: collectedCitations };
     },
   };
 }
