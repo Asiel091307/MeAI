@@ -3,6 +3,7 @@ import { Pool } from 'pg';
 import type { DocumentRepository } from '../../../src/db/contracts';
 import { createPostgresDocumentRepository } from '../../../src/db/postgres-documents';
 import { registerDocument } from '../../../src/documents/register-document';
+import { startDocumentProcessingInBackground } from '../../../src/documents/start-document-processing';
 import {
   type PublicDocumentItem,
   toPublicDocumentItem,
@@ -39,7 +40,17 @@ export function setDocumentPostRepositoryForTesting(
   testRepositoryOverride = repository;
 }
 
-export function createPostDocumentHandler(documents: Pick<DocumentRepository, 'create'>) {
+// Starts processing a registered document without making the upload wait for it.
+export type StartDocumentProcessing = (documentId: string) => void;
+
+const startInBackground: StartDocumentProcessing = (documentId) => {
+  void startDocumentProcessingInBackground(documentId);
+};
+
+export function createPostDocumentHandler(
+  documents: Pick<DocumentRepository, 'create'>,
+  startProcessing: StartDocumentProcessing = () => {},
+) {
   return async function handlePostDocument(request: Request): Promise<NextResponse<PostDocumentResponse>> {
     let formData: FormData;
     try {
@@ -62,6 +73,11 @@ export function createPostDocumentHandler(documents: Pick<DocumentRepository, 'c
       return NextResponse.json({ error: result.reason }, { status: 400 });
     }
 
+    // A PDF already registered as failed (damaged or protected) has nothing to process.
+    if (result.document.status === 'processing') {
+      startProcessing(result.document.id);
+    }
+
     return NextResponse.json(
       { document: toPublicDocumentItem(result.document) },
       { status: 201 },
@@ -73,6 +89,8 @@ export async function handleDefaultPostDocument(
   request: Request,
 ): Promise<NextResponse<PostDocumentResponse>> {
   const repository = getDefaultDocumentCreateRepository();
-  return createPostDocumentHandler(repository)(request);
+  // With a test repository there is no real database to process against.
+  const startProcessing = testRepositoryOverride ? () => {} : startInBackground;
+  return createPostDocumentHandler(repository, startProcessing)(request);
 }
 

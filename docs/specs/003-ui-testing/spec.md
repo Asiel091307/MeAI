@@ -45,5 +45,13 @@ Se propone añadir como **únicas dependencias de desarrollo (`devDependencies`)
 
 ## Estado
 
-**Aprobada por el usuario el 2026-11-10:** Opción 1 (`@testing-library/react` + `happy-dom` en `devDependencies`). Pendiente de que el integrador añada las dependencias a `package.json` en `main`.
+**Aprobada por el usuario el 2026-11-10:** Opción 1 (`@testing-library/react` + `happy-dom` en `devDependencies`).
+
+**Integrada en `main` el 2026-11-10**, con versiones fijas en `devDependencies`:
+- `@testing-library/react` 16.3.3
+- `@testing-library/dom` 10.4.2: dependencia par obligatoria de `@testing-library/react` 16; sin ella no se instala correctamente.
+- `@testing-library/user-event` 14.6.8: se descartó la 14.6.9 porque se publicó el mismo día; se usa la anterior, con más de dos semanas.
+- `happy-dom` 21.0.4
+
+Configuración: `vitest.config.ts` incluye `tests/unit/**/*.test.tsx` y compila JSX con el runtime automático. El entorno por defecto sigue siendo `node`; cada test de interfaz activa el DOM con el comentario `// @vitest-environment happy-dom` al inicio del archivo. Ejemplo: `tests/unit/ui/ui-testing-setup.test.tsx`.
 

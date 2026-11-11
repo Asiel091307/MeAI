@@ -28,7 +28,7 @@ test('GeminiAnswerGenerator sends request containing only valid sources and the 
 
   const generator = createGeminiAnswerGenerator({
     apiKey: 'test-api-key',
-    model: 'gemini-2.5-flash',
+    model: 'gemini-3.5-flash-lite',
     fetch: mockFetch,
   });
 
@@ -47,7 +47,7 @@ test('GeminiAnswerGenerator sends request containing only valid sources and the 
   }
 
   expect(mockFetch).toHaveBeenCalledTimes(1);
-  expect(capturedUrl).toContain('models/gemini-2.5-flash:streamGenerateContent?alt=sse');
+  expect(capturedUrl).toContain('models/gemini-3.5-flash-lite:streamGenerateContent?alt=sse');
   expect(capturedInit?.headers).toMatchObject({
     'x-goog-api-key': 'test-api-key',
     'Content-Type': 'application/json',

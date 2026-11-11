@@ -45,7 +45,7 @@ function extractCitations(text: string, validIds: Set<string>): { cleanText: str
 export function createGeminiAnswerGenerator(options: GeminiGeneratorOptions = {}): AnswerGenerator {
   const fetchFn = options.fetch ?? globalThis.fetch;
   const apiKey = options.apiKey ?? process.env.GEMINI_API_KEY ?? '';
-  const model = options.model ?? process.env.GENERATION_MODEL ?? 'gemini-2.5-flash';
+  const model = options.model ?? process.env.GENERATION_MODEL ?? 'gemini-3.5-flash-lite';
 
   return {
     async *stream(question: string, sources: readonly AnswerSource[]): AsyncIterable<AnswerEvent> {

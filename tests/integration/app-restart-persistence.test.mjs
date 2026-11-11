@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFile, execFileSync, spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import { readFile, rm } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import { promisify } from 'node:util';
 import { Pool } from 'pg';
@@ -72,6 +72,7 @@ function startNextApp(port, dbEnv) {
 
 test('PDF and document metadata persist in PostgreSQL across application restarts (T37)', async () => {
   const container = `meai_t37_${randomUUID().replaceAll('-', '').slice(0, 16)}`;
+  const distDir = `.next-test-${randomUUID().slice(0, 8)}`;
   await exec('docker', [
     'run', '-d', '--rm', '--name', container,
     '-e', 'POSTGRES_DB=meai', '-e', 'POSTGRES_USER=meai',
@@ -118,6 +119,8 @@ test('PDF and document metadata persist in PostgreSQL across application restart
       DB_USER: 'meai',
       DB_NAME: 'meai',
       DB_PASSWORD: 'test-only-password',
+      // Own build folder: another test may be running `next dev` on `.next` at the same time.
+      NEXT_DIST_DIR: distDir,
     };
 
     // 1. Start application (first instance)
@@ -170,6 +173,7 @@ test('PDF and document metadata persist in PostgreSQL across application restart
   } finally {
     if (firstApp) firstApp.stop();
     if (secondApp) secondApp.stop();
+    await rm(distDir, { recursive: true, force: true });
     if (pool) await pool.end();
     await exec('docker', ['stop', container], { timeout: 30_000 });
   }
