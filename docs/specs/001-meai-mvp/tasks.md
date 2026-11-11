@@ -89,11 +89,11 @@ Fuente: [`spec.md`](./spec.md), [`plan.md`](./plan.md) y [`docs/constitution.md`
   Hecho cuando: pruebas de ruta comprueban `201` para registro y `400` para formato o límites inválidos.
 - [x] T34. Exponer `GET /api/documents` sin binarios y con estado actualizado. **RF: RF-2, RF-7.**
   Hecho cuando: pruebas de ruta devuelven lista vacía o documentos con estado y error vigentes.
-- [ ] T35. Mostrar la selección y subida de un PDF. **RF: RF-1.**
+- [x] T35. Mostrar la selección y subida de un PDF. **RF: RF-1.**
   Hecho cuando: una prueba de interfaz selecciona un PDF y envía la solicitud de registro.
-- [ ] T35a. Mostrar el listado de documentos y el estado vacío. **RF: RF-7.**
+- [x] T35a. Mostrar el listado de documentos y el estado vacío. **RF: RF-7.**
   Hecho cuando: la interfaz muestra los documentos recibidos o invita a subir el primero si la lista está vacía.
-- [ ] T36. Reflejar las transiciones `processing` → `available`/`failed` y mostrar causas en español. **RF: RF-2, RF-7.**
+- [x] T36. Reflejar las transiciones `processing` → `available`/`failed` y mostrar causas en español. **RF: RF-2, RF-7.**
   Hecho cuando: una prueba de interfaz observa cambios de estado sin recargar la página.
 - [x] T37. Verificar persistencia del PDF y los metadatos tras reiniciar la aplicación. **RF: RF-1, RF-7.**
   Hecho cuando: una prueba de integración reinicia la app y vuelve a leer el documento desde PostgreSQL.
@@ -114,28 +114,28 @@ Fuente: [`spec.md`](./spec.md), [`plan.md`](./plan.md) y [`docs/constitution.md`
   Hecho cuando: pruebas de contexto irrelevante no producen afirmaciones documentales ni citas.
 - [x] T44. Implementar el adaptador de generación aprobado con instrucciones de usar solo evidencia recuperada. **RF: RF-4.**
   Hecho cuando: una prueba de contrato comprueba que la petición solo incluye fragmentos vigentes y la pregunta.
-- [ ] T45. Validar citas por afirmación contra los identificadores recuperados. **RF: RF-4.**
+- [x] T45. Validar citas por afirmación contra los identificadores recuperados. **RF: RF-4.**
   Hecho cuando: pruebas aceptan citas a fuentes reales y rechazan citas inventadas.
-- [ ] T46. Probar una respuesta que combina varios documentos sin confundir páginas ni fuentes. **RF: RF-4.**
+- [x] T46. Probar una respuesta que combina varios documentos sin confundir páginas ni fuentes. **RF: RF-4.**
   Hecho cuando: cada afirmación documental de la prueba apunta al documento y página que la sustentan.
 
 ## 7. Chat y streaming
 
-- [ ] T47. Conservar mensajes solo en memoria de la pestaña y descartarlos al recargar. **RF: RF-5.**
+- [x] T47. Conservar mensajes solo en memoria de la pestaña y descartarlos al recargar. **RF: RF-5.**
   Hecho cuando: una prueba de interfaz conserva el historial entre turnos y lo pierde tras recargar.
-- [ ] T48. Contextualizar preguntas de seguimiento con el historial, sin utilizarlo como evidencia. **RF: RF-3, RF-4, RF-5.**
+- [x] T48. Contextualizar preguntas de seguimiento con el historial, sin utilizarlo como evidencia. **RF: RF-3, RF-4, RF-5.**
   Hecho cuando: la prueba resuelve una referencia anterior pero vuelve a buscar fragmentos vigentes.
-- [ ] T49. Bloquear una segunda pregunta desde que comienza la búsqueda hasta que termina o falla la respuesta. **RF: RF-5.**
+- [x] T49. Bloquear una segunda pregunta desde que comienza la búsqueda hasta que termina o falla la respuesta. **RF: RF-5.**
   Hecho cuando: una prueba rechaza el segundo envío durante ambas fases y permite enviarlo al finalizar.
-- [ ] T50. Exponer `POST /api/chat/answers` con validación y eventos de estado, texto provisional y resultado final. **RF: RF-3, RF-4, RF-6.**
+- [x] T50. Exponer `POST /api/chat/answers` con validación y eventos de estado, texto provisional y resultado final. **RF: RF-3, RF-4, RF-6.**
   Hecho cuando: una prueba de contrato distingue eventos progresivos de respuesta final y errores.
-- [ ] T51. Mostrar los eventos de texto progresivamente e indicar operación en curso. **RF: RF-6.**
+- [x] T51. Mostrar los eventos de texto progresivamente e indicar operación en curso. **RF: RF-6.**
   Hecho cuando: una prueba de interfaz ve texto antes del evento final y un indicador mientras se genera.
-- [ ] T52. Retirar el texto parcial como respuesta válida al fallar o interrumpirse la generación. **RF: RF-6.**
+- [x] T52. Retirar el texto parcial como respuesta válida al fallar o interrumpirse la generación. **RF: RF-6.**
   Hecho cuando: una prueba muestra error y opción de reintento sin respuesta final parcial.
-- [ ] T53. Mostrar cada cita con documento y página o fragmento. **RF: RF-4.**
+- [x] T53. Mostrar cada cita con documento y página o fragmento. **RF: RF-4.**
   Hecho cuando: una prueba de interfaz identifica la fuente correspondiente a cada afirmación documental.
-- [ ] T53a. Priorizar documentos vigentes sobre historial contradictorio. **RF: RF-4, RF-5.**
+- [x] T53a. Priorizar documentos vigentes sobre historial contradictorio. **RF: RF-4, RF-5.**
   Hecho cuando: una prueba de lógica ignora afirmaciones históricas que carecen de respaldo documental actual.
 
 ## 8. Eliminación y reprocesamiento
@@ -144,14 +144,13 @@ Fuente: [`spec.md`](./spec.md), [`plan.md`](./plan.md) y [`docs/constitution.md`
   Hecho cuando: una prueba en PostgreSQL real confirma que no quedan datos asociados al documento borrado.
 - [x] T54a. Comprobar la reversión completa de un borrado fallido. **RF: RF-8.**
   Hecho cuando: una prueba en PostgreSQL real provoca un fallo y confirma que el PDF y todos sus datos siguen intactos.
-- [ ] T55. Exponer `DELETE /api/documents/:id` con `204`, `404` y error de borrado apropiados. **RF: RF-8.**
+- [x] T55. Exponer `DELETE /api/documents/:id` con `204`, `404` y error de borrado apropiados. **RF: RF-8.**
   Hecho cuando: pruebas de ruta distinguen los tres resultados sin dar por completado un borrado fallido.
-  Avance: el caso de uso `deleteDocument` (carril A) ya distingue `deleted`, `not_found` y `error`; falta la ruta HTTP y sus pruebas (carril B).
-- [ ] T56. Pedir confirmación antes de borrar y actualizar el listado solo tras éxito. **RF: RF-7, RF-8.**
+- [x] T56. Pedir confirmación antes de borrar y actualizar el listado solo tras éxito. **RF: RF-7, RF-8.**
   Hecho cuando: una prueba de interfaz cancela la confirmación sin borrar y muestra un error si el borrado falla.
-- [ ] T57. Marcar como no disponibles las citas visibles de documentos eliminados. **RF: RF-5, RF-8.**
+- [x] T57. Marcar como no disponibles las citas visibles de documentos eliminados. **RF: RF-5, RF-8.**
   Hecho cuando: la prueba conserva mensajes anteriores pero invalida sus citas y no reutiliza el contenido borrado.
-- [ ] T58. Cancelar una búsqueda o generación dependiente al eliminar su documento. **RF: RF-6, RF-8.**
+- [x] T58. Cancelar una búsqueda o generación dependiente al eliminar su documento. **RF: RF-6, RF-8.**
   Hecho cuando: una prueba descarta texto provisional, avisa al usuario y evita una respuesta final con el documento borrado.
 - [x] T59. Iniciar el reprocesamiento de documentos disponibles o fallidos y excluirlos de nuevas consultas. **RF: RF-2, RF-3, RF-9.**
   Hecho cuando: una prueba observa `processing` y cero resultados del documento durante el intento.
@@ -161,11 +160,11 @@ Fuente: [`spec.md`](./spec.md), [`plan.md`](./plan.md) y [`docs/constitution.md`
   Hecho cuando: una prueba conserva consultable la versión previa completa e informa del fallo.
 - [x] T62. Mantener fallido, con causa, un documento fallido cuyo reintento también falla. **RF: RF-2, RF-9.**
   Hecho cuando: una prueba verifica estado `failed` y ningún fragmento consultable.
-- [ ] T63. Exponer `POST /api/documents/:id/reprocess`. **RF: RF-2, RF-9.**
+- [x] T63. Exponer `POST /api/documents/:id/reprocess`. **RF: RF-2, RF-9.**
   Hecho cuando: pruebas de ruta cubren `202` para disponible o fallido y `404` para un id inexistente.
-- [ ] T63a. Mostrar la acción de reprocesar documentos disponibles o fallidos. **RF: RF-2, RF-9.**
+- [x] T63a. Mostrar la acción de reprocesar documentos disponibles o fallidos. **RF: RF-2, RF-9.**
   Hecho cuando: una prueba de interfaz inicia el reintento y refleja el estado `processing`.
-- [ ] T64. Cancelar consultas o respuestas dependientes cuando empiece un reprocesamiento. **RF: RF-6, RF-9.**
+- [x] T64. Cancelar consultas o respuestas dependientes cuando empiece un reprocesamiento. **RF: RF-6, RF-9.**
   Hecho cuando: una prueba descarta texto parcial, avisa al usuario y no publica respuesta basada en la versión anterior.
 
 ## 9. Cierre del MVP
