@@ -107,6 +107,74 @@ test('GeminiAnswerGenerator strips invented citations not present in sources', a
   });
 });
 
+test('GeminiAnswerGenerator emits text chunks progressively as SSE arrives and hides split [FUENTES: ...] markers', async () => {
+  const encoder = new TextEncoder();
+  let controller!: ReadableStreamDefaultController<Uint8Array>;
+
+  const stream = new ReadableStream<Uint8Array>({
+    start(c) {
+      controller = c;
+    },
+  });
+
+  const mockFetch = vi.fn<typeof fetch>(async () => {
+    return new Response(stream, {
+      status: 200,
+      headers: { 'Content-Type': 'text/event-stream' },
+    });
+  });
+
+  const generator = createGeminiAnswerGenerator({
+    apiKey: 'test-api-key',
+    fetch: mockFetch,
+  });
+
+  const sources: AnswerSource[] = [
+    { id: 'chunk-1', documentId: 'doc-1', page: 1, text: 'El plazo vence el viernes.' },
+    { id: 'chunk-2', documentId: 'doc-2', page: 3, text: 'Se entrega en ventanilla.' },
+  ];
+
+  const iterator = generator.stream('¿Cuándo vence y dónde se entrega?', sources)[Symbol.asyncIterator]();
+
+  // 1. Push first SSE event and verify it is emitted BEFORE the stream finishes
+  controller.enqueue(
+    encoder.encode('data: {"candidates":[{"content":{"parts":[{"text":"El plazo vence el viernes. "}]}}]}\n\n'),
+  );
+  const firstStep = await iterator.next();
+  expect(firstStep).toEqual({
+    done: false,
+    value: { type: 'text', text: 'El plazo vence el viernes. ' },
+  });
+
+  // 2. Push second SSE event containing text plus a partial prefix of [FUENTES:
+  controller.enqueue(
+    encoder.encode('data: {"candidates":[{"content":{"parts":[{"text":"Se entrega en ventanilla.[FU"}]}}]}\n\n'),
+  );
+  const secondStep = await iterator.next();
+  expect(secondStep).toEqual({
+    done: false,
+    value: { type: 'text', text: 'Se entrega en ventanilla.' },
+  });
+
+  // 3. Push the rest of the split [FUENTES: ...] marker across two more SSE chunks and close
+  controller.enqueue(
+    encoder.encode('data: {"candidates":[{"content":{"parts":[{"text":"ENTES: chunk-1, "}]}}]}\n\n'),
+  );
+  controller.enqueue(
+    encoder.encode('data: {"candidates":[{"content":{"parts":[{"text":"chunk-2, chunk-falso]"}]}}]}\n\n'),
+  );
+  controller.close();
+
+  const thirdStep = await iterator.next();
+  expect(thirdStep).toEqual({
+    done: false,
+    value: { type: 'final', citations: ['chunk-1', 'chunk-2'] },
+  });
+
+  const endStep = await iterator.next();
+  expect(endStep.done).toBe(true);
+});
+
 test('GeminiAnswerGenerator produces empty citations when evidence is insufficient', async () => {
   const mockFetch = vi.fn<typeof fetch>(async () => {
     const ssePayload = [
