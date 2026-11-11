@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFile, execFileSync, spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { readFile, rm } from 'node:fs/promises';
+import { readFile, rm, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import { promisify } from 'node:util';
 import { Pool } from 'pg';
@@ -73,6 +73,9 @@ function startNextApp(port, dbEnv) {
 test('PDF and document metadata persist in PostgreSQL across application restarts (T37)', async () => {
   const container = `meai_t37_${randomUUID().replaceAll('-', '').slice(0, 16)}`;
   const distDir = `.next-test-${randomUUID().slice(0, 8)}`;
+  // `next dev` adds the custom distDir to these two files; restore them when the test ends.
+  const nextManagedFiles = ['tsconfig.json', 'next-env.d.ts'];
+  const originalContents = await Promise.all(nextManagedFiles.map((file) => readFile(file, 'utf8')));
   await exec('docker', [
     'run', '-d', '--rm', '--name', container,
     '-e', 'POSTGRES_DB=meai', '-e', 'POSTGRES_USER=meai',
@@ -174,6 +177,7 @@ test('PDF and document metadata persist in PostgreSQL across application restart
     if (firstApp) firstApp.stop();
     if (secondApp) secondApp.stop();
     await rm(distDir, { recursive: true, force: true });
+    await Promise.all(nextManagedFiles.map((file, index) => writeFile(file, originalContents[index])));
     if (pool) await pool.end();
     await exec('docker', ['stop', container], { timeout: 30_000 });
   }
