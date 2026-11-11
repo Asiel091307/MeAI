@@ -104,11 +104,11 @@ Fuente: [`spec.md`](./spec.md), [`plan.md`](./plan.md) y [`docs/constitution.md`
   Hecho cuando: pruebas unitarias rechazan esas entradas antes de llamar a embeddings o búsqueda.
 - [x] T39. Impedir consultas cuando no haya documentos disponibles. **RF: RF-3.**
   Hecho cuando: una prueba devuelve un mensaje en español sin invocar búsqueda.
-- [ ] T40. Consultar con pgvector los fragmentos más cercanos únicamente de versiones activas `available`. **RF: RF-3, RF-9.**
+- [x] T40. Consultar con pgvector los fragmentos más cercanos únicamente de versiones activas `available`. **RF: RF-3, RF-9.**
   Hecho cuando: una prueba en PostgreSQL real ordena resultados por similitud y excluye documentos `processing` y `failed`.
-- [ ] T41. Adjuntar id de fragmento, documento y página a cada resultado de búsqueda. **RF: RF-3, RF-4.**
+- [x] T41. Adjuntar id de fragmento, documento y página a cada resultado de búsqueda. **RF: RF-3, RF-4.**
   Hecho cuando: una prueba de integración recupera las tres referencias junto con cada texto.
-- [ ] T42. Detener la respuesta al fallar la búsqueda y devolver un error recuperable. **RF: RF-3, RF-6.**
+- [x] T42. Detener la respuesta al fallar la búsqueda y devolver un error recuperable. **RF: RF-3, RF-6.**
   Hecho cuando: una prueba verifica que el generador no se invoca y la pregunta puede reintentarse.
 - [x] T43. Responder explícitamente en español cuando no hay evidencia suficiente, sin citas ni datos externos. **RF: RF-4.**
   Hecho cuando: pruebas de contexto irrelevante no producen afirmaciones documentales ni citas.
@@ -146,19 +146,20 @@ Fuente: [`spec.md`](./spec.md), [`plan.md`](./plan.md) y [`docs/constitution.md`
   Hecho cuando: una prueba en PostgreSQL real provoca un fallo y confirma que el PDF y todos sus datos siguen intactos.
 - [ ] T55. Exponer `DELETE /api/documents/:id` con `204`, `404` y error de borrado apropiados. **RF: RF-8.**
   Hecho cuando: pruebas de ruta distinguen los tres resultados sin dar por completado un borrado fallido.
+  Avance: el caso de uso `deleteDocument` (carril A) ya distingue `deleted`, `not_found` y `error`; falta la ruta HTTP y sus pruebas (carril B).
 - [ ] T56. Pedir confirmación antes de borrar y actualizar el listado solo tras éxito. **RF: RF-7, RF-8.**
   Hecho cuando: una prueba de interfaz cancela la confirmación sin borrar y muestra un error si el borrado falla.
 - [ ] T57. Marcar como no disponibles las citas visibles de documentos eliminados. **RF: RF-5, RF-8.**
   Hecho cuando: la prueba conserva mensajes anteriores pero invalida sus citas y no reutiliza el contenido borrado.
 - [ ] T58. Cancelar una búsqueda o generación dependiente al eliminar su documento. **RF: RF-6, RF-8.**
   Hecho cuando: una prueba descarta texto provisional, avisa al usuario y evita una respuesta final con el documento borrado.
-- [ ] T59. Iniciar el reprocesamiento de documentos disponibles o fallidos y excluirlos de nuevas consultas. **RF: RF-2, RF-3, RF-9.**
+- [x] T59. Iniciar el reprocesamiento de documentos disponibles o fallidos y excluirlos de nuevas consultas. **RF: RF-2, RF-3, RF-9.**
   Hecho cuando: una prueba observa `processing` y cero resultados del documento durante el intento.
-- [ ] T60. Publicar solo la nueva versión completa tras reprocesar correctamente. **RF: RF-9.**
+- [x] T60. Publicar solo la nueva versión completa tras reprocesar correctamente. **RF: RF-9.**
   Hecho cuando: una prueba de integración encuentra únicamente fragmentos de la versión nueva activa.
-- [ ] T61. Restaurar la versión anterior si falla el reprocesamiento de uno disponible. **RF: RF-2, RF-9.**
+- [x] T61. Restaurar la versión anterior si falla el reprocesamiento de uno disponible. **RF: RF-2, RF-9.**
   Hecho cuando: una prueba conserva consultable la versión previa completa e informa del fallo.
-- [ ] T62. Mantener fallido, con causa, un documento fallido cuyo reintento también falla. **RF: RF-2, RF-9.**
+- [x] T62. Mantener fallido, con causa, un documento fallido cuyo reintento también falla. **RF: RF-2, RF-9.**
   Hecho cuando: una prueba verifica estado `failed` y ningún fragmento consultable.
 - [ ] T63. Exponer `POST /api/documents/:id/reprocess`. **RF: RF-2, RF-9.**
   Hecho cuando: pruebas de ruta cubren `202` para disponible o fallido y `404` para un id inexistente.
