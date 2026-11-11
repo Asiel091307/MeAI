@@ -68,7 +68,7 @@ export function DocumentList({
             <li key={doc.id} data-document-id={doc.id} data-document-status={doc.status}>
               <span>{doc.name}</span>{' '}
               <span aria-label={`Estado de ${doc.name}`}>{STATUS_LABELS[doc.status]}</span>
-              {doc.status === 'failed' && doc.error ? (
+              {doc.error ? (
                 <p role="note">{doc.error}</p>
               ) : null}
 
