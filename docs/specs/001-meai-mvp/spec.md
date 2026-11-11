@@ -67,7 +67,7 @@ El sistema deberá generar respuestas basadas exclusivamente en los fragmentos r
 Criterios de aceptación EARS:
 
 - Cuando los fragmentos recuperados respalden una respuesta a la pregunta, el sistema deberá responder únicamente con la información respaldada.
-- Cuando la respuesta utilice información documental, el sistema deberá identificar para cada afirmación documental el documento y la página o fragmento que la respalda.
+- Cuando la respuesta utilice información documental, el sistema deberá identificar el documento y la página o fragmento de cada fuente que la respalda. En el MVP la cita es por respuesta: junto a cada respuesta se muestran las fuentes recuperadas que la sustentan, y solo fuentes realmente recuperadas (decisión del usuario del 2026-11-11). Citar frase a frase queda como mejora futura.
 - Si los fragmentos recuperados no permiten responder a la pregunta, el sistema deberá decir que no hay información suficiente, sin completar con conocimiento externo ni presentar citas como respaldo de una respuesta inexistente.
 - Si responder requiere información de varios documentos, el sistema deberá combinar solo la información respaldada y distinguir las fuentes correspondientes.
 
@@ -173,7 +173,7 @@ Criterios de aceptación EARS:
 - Cada documento muestra un estado verificable; los PDF parcialmente ilegibles no quedan disponibles y los fallidos pueden reintentarse.
 - Los documentos disponibles pueden consultarse mediante preguntas semánticas.
 - La búsqueda considera todos los documentos disponibles y rechaza preguntas vacías o de más de 1000 caracteres.
-- Las respuestas se muestran progresivamente y citan el documento y la página o fragmento que sustenta cada afirmación documental; los errores no dejan respuestas parciales válidas.
+- Las respuestas se muestran progresivamente y citan el documento y la página o fragmento de las fuentes que las sustentan; los errores no dejan respuestas parciales válidas.
 - Las preguntas de seguimiento consideran el historial hasta cerrar o recargar la pestaña, con una sola pregunta activa por vez.
 - La falta de evidencia produce una respuesta explícita sin conocimiento externo.
 - Los documentos fallidos pueden reintentarse o eliminarse.
