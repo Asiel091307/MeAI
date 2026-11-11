@@ -59,6 +59,14 @@ export interface RecoveryResult {
   restored: string[];
 }
 
+export type StartReprocessingResult = 'started' | 'not_found' | 'already_processing';
+
+// T59: reprocessing starts by marking the document 'processing', which removes it from new
+// queries even if it keeps an active version. publish / fail then finish the attempt.
+export interface DocumentReprocessingRepository {
+  startReprocessing(documentId: string): Promise<StartReprocessingResult>;
+}
+
 // Moves a processing attempt to its final state. Each method is one transaction.
 export interface DocumentPublicationRepository {
   // T30: the version becomes 'complete' and the only active one; the document becomes 'available'.
