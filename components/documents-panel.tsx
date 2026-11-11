@@ -14,6 +14,8 @@ export interface DocumentsPanelProps {
   initialDocuments?: PublicDocumentItem[];
   pollIntervalMs?: number;
   onDocumentsChange?: (documents: PublicDocumentItem[]) => void;
+  onDocumentDeleted?: (documentId: string) => void;
+  onDocumentReprocessing?: (documentId: string) => void;
 }
 
 export function DocumentsPanel({
@@ -21,9 +23,12 @@ export function DocumentsPanel({
   initialDocuments = [],
   pollIntervalMs = 2000,
   onDocumentsChange,
+  onDocumentDeleted,
+  onDocumentReprocessing,
 }: DocumentsPanelProps) {
   const [documents, setDocuments] = useState<PublicDocumentItem[]>(initialDocuments);
   const [emptyMessage, setEmptyMessage] = useState<string | null>(EMPTY_DOCUMENTS_MESSAGE);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const loadDocuments = useCallback(async () => {
     try {
@@ -76,6 +81,7 @@ export function DocumentsPanel({
   }, [hasProcessingDocuments, loadDocuments, pollIntervalMs]);
 
   const handleDocumentRegistered = (newDoc: PublicDocumentItem) => {
+    setActionError(null);
     setDocuments((prev) => {
       const exists = prev.some((d) => d.id === newDoc.id);
       const updated = exists
@@ -86,10 +92,86 @@ export function DocumentsPanel({
     });
   };
 
+  const handleDeleteDocument = async (documentId: string) => {
+    setActionError(null);
+    try {
+      const requestFetch = fetchFn ?? globalThis.fetch;
+      const response = await requestFetch(`/api/documents/${documentId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.status === 204 || response.ok) {
+        setDocuments((prev) => {
+          const updated = prev.filter((doc) => doc.id !== documentId);
+          onDocumentsChange?.(updated);
+          return updated;
+        });
+        onDocumentDeleted?.(documentId);
+        return;
+      }
+
+      let message = 'No se pudo eliminar el documento. No se borró nada; inténtalo de nuevo.';
+      try {
+        const body = await response.json();
+        if (body?.error) {
+          message = body.error;
+        }
+      } catch {
+        // Keep default Spanish error message
+      }
+      setActionError(message);
+    } catch {
+      setActionError('Error de conexión al intentar eliminar el documento.');
+    }
+  };
+
+  const handleReprocessDocument = async (documentId: string) => {
+    setActionError(null);
+    try {
+      const requestFetch = fetchFn ?? globalThis.fetch;
+      const response = await requestFetch(`/api/documents/${documentId}/reprocess`, {
+        method: 'POST',
+      });
+
+      if (response.status === 202 || response.ok) {
+        setDocuments((prev) => {
+          const updated = prev.map((doc) =>
+            doc.id === documentId
+              ? { ...doc, status: 'processing' as const, error: null }
+              : doc,
+          );
+          onDocumentsChange?.(updated);
+          return updated;
+        });
+        onDocumentReprocessing?.(documentId);
+        return;
+      }
+
+      let message = 'No se pudo iniciar el reprocesamiento del documento.';
+      try {
+        const body = await response.json();
+        if (body?.error) {
+          message = body.error;
+        }
+      } catch {
+        // Keep default Spanish error message
+      }
+      setActionError(message);
+    } catch {
+      setActionError('Error de conexión al intentar reprocesar el documento.');
+    }
+  };
+
   return (
     <div>
       <PdfUploader fetchFn={fetchFn} onDocumentRegistered={handleDocumentRegistered} />
-      <DocumentList documents={documents} emptyMessage={emptyMessage} />
+      {actionError ? <p role="alert">{actionError}</p> : null}
+      <DocumentList
+        documents={documents}
+        emptyMessage={emptyMessage}
+        onDeleteDocument={handleDeleteDocument}
+        onReprocessDocument={handleReprocessDocument}
+      />
     </div>
   );
 }
