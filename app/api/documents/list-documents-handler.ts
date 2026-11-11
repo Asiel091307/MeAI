@@ -1,24 +1,17 @@
 import { NextResponse } from 'next/server';
 import { Pool } from 'pg';
-import type { DocumentMetadata, DocumentRepository, DocumentStatus } from '../../../src/db/contracts';
+import type { DocumentMetadata, DocumentRepository } from '../../../src/db/contracts';
 import { createPostgresDocumentRepository } from '../../../src/db/postgres-documents';
 
-export const EMPTY_DOCUMENTS_MESSAGE =
-  'Aún no hay documentos incorporados. Sube tu primer PDF para comenzar.';
+import {
+  EMPTY_DOCUMENTS_MESSAGE,
+  type ListDocumentsResponseBody,
+  type PublicDocumentItem,
+} from './public-document';
 
-export interface PublicDocumentItem {
-  id: string;
-  name: string;
-  status: DocumentStatus;
-  error: string | null;
-  activeVersionId: string | null;
-  createdAt: string;
-}
-
-export interface ListDocumentsResponseBody {
-  documents: PublicDocumentItem[];
-  message: string | null;
-}
+// Re-exported so existing imports keep working; browser code imports './public-document'.
+export { EMPTY_DOCUMENTS_MESSAGE };
+export type { ListDocumentsResponseBody, PublicDocumentItem };
 
 let defaultPool: Pool | null = null;
 let testRepositoryOverride: Pick<DocumentRepository, 'list'> | null = null;

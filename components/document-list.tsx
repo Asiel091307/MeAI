@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import {
   EMPTY_DOCUMENTS_MESSAGE,
   type PublicDocumentItem,
-} from '../app/api/documents/list-documents-handler';
+} from '../app/api/documents/public-document';
 import type { DocumentStatus } from '../src/db/contracts';
 
 export const STATUS_LABELS: Record<DocumentStatus, string> = {

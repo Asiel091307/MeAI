@@ -5,7 +5,7 @@ import {
   EMPTY_DOCUMENTS_MESSAGE,
   type ListDocumentsResponseBody,
   type PublicDocumentItem,
-} from '../app/api/documents/list-documents-handler';
+} from '../app/api/documents/public-document';
 import { DocumentList } from './document-list';
 import { PdfUploader } from './pdf-uploader';
 

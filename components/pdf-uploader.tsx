@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
-import type { PublicDocumentItem } from '../app/api/documents/list-documents-handler';
+import type { PublicDocumentItem } from '../app/api/documents/public-document';
 
 export interface PdfUploaderProps {
   fetchFn?: typeof fetch;
