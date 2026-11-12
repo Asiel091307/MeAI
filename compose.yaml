@@ -1,6 +1,8 @@
 services:
   app:
     build: .
+    # Start again by itself after Docker Desktop or the PC restarts.
+    restart: unless-stopped
     environment:
       DB_HOST: db
       DB_PORT: "5432"
@@ -29,6 +31,7 @@ services:
       retries: 12
   db:
     image: pgvector/pgvector:0.8.1-pg17
+    restart: unless-stopped
     environment:
       POSTGRES_DB: meai
       POSTGRES_USER: meai

@@ -8,6 +8,7 @@ import {
 } from '../app/api/documents/public-document';
 import { DocumentList } from './document-list';
 import { PdfUploader } from './pdf-uploader';
+import { serverUnreachableMessage } from './server-unreachable';
 
 export interface DocumentsPanelProps {
   fetchFn?: typeof fetch;
@@ -121,7 +122,7 @@ export function DocumentsPanel({
       }
       setActionError(message);
     } catch {
-      setActionError('Error de conexión al intentar eliminar el documento.');
+      setActionError(serverUnreachableMessage('al intentar eliminar el documento'));
     }
   };
 
@@ -158,7 +159,7 @@ export function DocumentsPanel({
       }
       setActionError(message);
     } catch {
-      setActionError('Error de conexión al intentar reprocesar el documento.');
+      setActionError(serverUnreachableMessage('al intentar reprocesar el documento'));
     }
   };
 

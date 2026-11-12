@@ -6,6 +6,7 @@ import {
   invalidateDeletedDocumentCitations,
 } from '../src/rag/answering/conversation-context';
 import type { ChatAnswerStreamEvent } from '../src/rag/answering/dependent-query-cancellation';
+import { serverUnreachableMessage } from './server-unreachable';
 
 export interface ChatPanelProps {
   fetchFn?: typeof fetch;
@@ -165,7 +166,7 @@ export function ChatPanel({ fetchFn, deletedDocumentIds = [] }: ChatPanelProps) 
       }
     } catch {
       setProvisionalText('');
-      setErrorMessage('Error de conexión durante la consulta. Inténtalo de nuevo.');
+      setErrorMessage(serverUnreachableMessage('durante la consulta'));
       setLastFailedQuestion(trimmed);
     } finally {
       setStatusMessage(null);

@@ -116,6 +116,8 @@ Las decisiones del proyecto están en [`docs/specs/`](docs/specs/). La relación
 
 | Síntoma | Causa y solución |
 | --- | --- |
+| "No se pudo conectar con MeAI…" al subir o preguntar | La app no está en marcha o todavía arranca. Pasa, por ejemplo, si la pestaña seguía abierta tras reiniciar el PC o Docker. Abre Docker Desktop, ejecuta `docker compose up -d`, espera unos segundos y recarga la página. Los contenedores tienen `restart: unless-stopped`, así que vuelven solos cuando Docker arranca. |
+| Pulsas "Subir PDF" y la página se recarga sin subir nada | La página aún no terminó de cargar su JavaScript; la primera carga en modo desarrollo tarda unos segundos. Espera a que aparezca el listado de documentos y vuelve a intentarlo. |
 | Subir un PDF da error 500 y los logs (`docker compose logs app`) dicen `password authentication failed` | El volumen de la base se creó con otra contraseña: `POSTGRES_PASSWORD` solo se aplica la primera vez. Pon en la base la contraseña de tu `.env`, o borra el volumen con `docker compose down -v` si no tienes datos que conservar. |
 | Los documentos quedan "Fallido" con un error de embeddings | Falta `GEMINI_API_KEY`, la clave es inválida o se agotó la cuota gratuita. Revisa `.env`, sin espacios alrededor del `=`, y reinicia. |
 | `docker compose up` dice que el puerto 3000 está ocupado | Otro programa usa el puerto. Ciérralo o cambia el puerto en `compose.yaml`. |

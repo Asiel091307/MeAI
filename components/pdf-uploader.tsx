@@ -2,6 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import type { PublicDocumentItem } from '../app/api/documents/public-document';
+import { serverUnreachableMessage } from './server-unreachable';
 
 export interface PdfUploaderProps {
   fetchFn?: typeof fetch;
@@ -56,7 +57,7 @@ export function PdfUploader({ fetchFn, onDocumentRegistered }: PdfUploaderProps)
         fileInputRef.current.value = '';
       }
     } catch {
-      setErrorMessage('Error de conexión al subir el archivo PDF.');
+      setErrorMessage(serverUnreachableMessage('al subir el archivo PDF'));
     } finally {
       setIsUploading(false);
     }
