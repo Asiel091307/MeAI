@@ -47,7 +47,8 @@ async function migrate(pool) {
   }
 }
 
-export async function startMvpEnvironment() {
+// `applyMigrations: false` starts an empty database, to test the migrations themselves.
+export async function startMvpEnvironment({ applyMigrations = true } = {}) {
   const container = `meai_mvp_${randomUUID().replaceAll('-', '').slice(0, 16)}`;
   await exec('docker', [
     'run', '-d', '--rm', '--name', container,
@@ -70,7 +71,7 @@ export async function startMvpEnvironment() {
       await new Promise((resolve) => setTimeout(resolve, 500));
     }
   }
-  await migrate(pool);
+  if (applyMigrations) await migrate(pool);
 
   const documents = createPostgresDocumentRepository(pool);
   const processingDeps = {

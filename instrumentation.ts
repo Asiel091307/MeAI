@@ -4,7 +4,7 @@
 // that way the Edge bundle never tries to include `pg`.
 export async function register(): Promise<void> {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
-    const { recoverInterruptedDocumentsAtStartup } = await import('./instrumentation-node');
-    await recoverInterruptedDocumentsAtStartup();
+    const { prepareDatabaseAtStartup } = await import('./instrumentation-node');
+    await prepareDatabaseAtStartup();
   }
 }

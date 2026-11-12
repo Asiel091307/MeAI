@@ -246,6 +246,14 @@ Reglas:
 
 Estado: **aprobada por el usuario el 2026-11-09**: 1000 / 200 / 5.
 
+## Preparación de la base de datos al arrancar
+
+Necesidad (RNF-5, uso local): la aplicación debe funcionar aunque nadie haya ejecutado `pnpm migrate` a mano.
+
+- Al arrancar, la aplicación aplica en orden las migraciones SQL pendientes de `db/migrations/` y después recupera los procesamientos interrumpidos (T32).
+- Usa la misma tabla `schema_migrations` y el mismo bloqueo que `pnpm migrate`, así que ambos caminos son compatibles y ninguna migración se aplica dos veces.
+- Si la base de datos no está disponible, el error se registra y el servidor arranca igual; las peticiones informan del problema al usuario.
+
 ## Dudas abiertas
 
 No quedan dudas funcionales pendientes para este MVP.
