@@ -169,11 +169,11 @@ Fuente: [`spec.md`](./spec.md), [`plan.md`](./plan.md) y [`docs/constitution.md`
 
 ## 9. Cierre del MVP
 
-- [ ] T65. Probar subida y consulta con fuentes usando PostgreSQL y pgvector reales. **RF: RF-1, RF-2, RF-3, RF-4, RF-6, RF-7.**
+- [x] T65. Probar subida y consulta con fuentes usando PostgreSQL y pgvector reales. **RF: RF-1, RF-2, RF-3, RF-4, RF-6, RF-7.**
   Hecho cuando: una prueba de integración sube un PDF y consulta sus fragmentos con documento y página correctos.
-- [ ] T65a. Probar eliminación y reprocesamiento sobre documentos persistidos. **RF: RF-2, RF-3, RF-5, RF-8, RF-9.**
+- [x] T65a. Probar eliminación y reprocesamiento sobre documentos persistidos. **RF: RF-2, RF-3, RF-5, RF-8, RF-9.**
   Hecho cuando: las pruebas de integración confirman que un documento borrado no reaparece y que solo la versión completa activa puede consultarse.
-- [ ] T66. Revisar los criterios de aceptación de `spec.md` frente a las pruebas existentes. **RF: RF-1–RF-9.**
+- [x] T66. Revisar los criterios de aceptación de `spec.md` frente a las pruebas existentes. **RF: RF-1–RF-9.**
   Hecho cuando: cada RF tiene al menos una prueba automatizada aplicable y los casos límite de la spec están cubiertos.
-- [ ] T66a. Ejecutar formato, `pnpm lint`, `pnpm typecheck`, `pnpm test` y `pnpm test:integration`. **RF: RF-1–RF-9.**
+- [x] T66a. Ejecutar formato, `pnpm lint`, `pnpm typecheck`, `pnpm test` y `pnpm test:integration`. **RF: RF-1–RF-9.**
   Hecho cuando: todos los comandos terminan correctamente sobre la implementación final.
