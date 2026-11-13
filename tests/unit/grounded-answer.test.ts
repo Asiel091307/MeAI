@@ -39,6 +39,7 @@ test('streamGroundedAnswer produces no documentary claims and zero citations whe
       documentId: 'doc-1',
       page: 2,
       text: 'Los cometas están compuestos de hielo, polvo y rocas.',
+      score: 0.9,
     },
   ];
 
@@ -70,6 +71,7 @@ test('streamGroundedAnswer discards invented citations and preserves only valid 
     documentId: 'doc-1',
     page: 1,
     text: 'El horario de atención es de 9 a 17 horas.',
+    score: 0.9,
   };
 
   const mockGenerator: AnswerGenerator = {

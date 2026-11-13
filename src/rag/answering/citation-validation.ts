@@ -6,6 +6,8 @@ export interface ResolvedCitation {
   documentName?: string;
   page: number;
   text: string;
+  // Similarity with which the fragment was retrieved, shown on its evidence card (spec 004).
+  score: number;
   available: boolean;
 }
 
@@ -53,6 +55,7 @@ export function resolveCitations(
       ...(documentName !== undefined ? { documentName } : {}),
       page: source.page,
       text: source.text,
+      score: source.score,
       available: true,
     });
   }

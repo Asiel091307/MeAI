@@ -8,5 +8,6 @@ export function toAnswerSource(chunk: RetrievedChunk): AnswerSource {
     documentId: chunk.documentId,
     page: chunk.page,
     text: chunk.text,
+    score: chunk.score,
   };
 }

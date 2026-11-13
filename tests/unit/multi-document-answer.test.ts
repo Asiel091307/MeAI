@@ -67,6 +67,7 @@ test('combines multiple documents in a single answer and maps each statement to 
       documentName: 'reglas-becas.pdf',
       page: 3,
       text: 'El promedio mínimo requerido para solicitar la beca es 8.5.',
+      score: 0.94,
       available: true,
     },
     {
@@ -75,6 +76,7 @@ test('combines multiple documents in a single answer and maps each statement to 
       documentName: 'convocatoria-2026.pdf',
       page: 7,
       text: 'La fecha límite de entrega de documentos es el 30 de octubre.',
+      score: 0.91,
       available: true,
     },
   ]);
@@ -90,6 +92,7 @@ test('combines multiple documents in a single answer and maps each statement to 
         documentName: 'reglas-becas.pdf',
         page: 3,
         text: 'El promedio mínimo requerido para solicitar la beca es 8.5.',
+        score: 0.94,
         available: true,
       },
     ],
@@ -106,6 +109,7 @@ test('combines multiple documents in a single answer and maps each statement to 
         documentName: 'convocatoria-2026.pdf',
         page: 7,
         text: 'La fecha límite de entrega de documentos es el 30 de octubre.',
+        score: 0.91,
         available: true,
       },
     ],

@@ -111,6 +111,7 @@ test('upload, process, search, reprocess and delete a document end to end', asyn
     assert.ok(found.chunks[0].score > found.chunks[1].score);
     assert.deepEqual(toAnswerSource(found.chunks[0]), {
       id: found.chunks[0].chunkId, documentId, page: 1, text: found.chunks[0].text,
+      score: found.chunks[0].score,
     });
 
     // 3. Reprocess with other chunk sizes: only the new version answers afterwards.

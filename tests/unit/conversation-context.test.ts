@@ -24,6 +24,7 @@ test('contextualizeFollowUpQuestion resolves conversational references for searc
           documentId: 'doc-becas',
           page: 1,
           text: 'Se requiere promedio de 9.0 y constancia de estudios.',
+          score: 0.9,
           available: true,
         },
       ],
@@ -91,6 +92,7 @@ test('contextualizeFollowUpQuestion resolves conversational references for searc
       documentId: 'doc-becas',
       page: 4,
       text: 'Para la Beca Excelencia, los documentos se entregan del 1 al 15 de septiembre.',
+      score: 0.93,
     },
   ]);
 
@@ -101,6 +103,7 @@ test('contextualizeFollowUpQuestion resolves conversational references for searc
       documentId: 'doc-becas',
       page: 4,
       text: 'Para la Beca Excelencia, los documentos se entregan del 1 al 15 de septiembre.',
+      score: 0.93,
       available: true,
     },
   ]);
@@ -123,6 +126,7 @@ test('prioritizes current document evidence over contradictory conversation hist
           documentId: 'doc-1',
           page: 2,
           text: 'El monto mensual de la beca es de 1,500 pesos.',
+          score: 0.9,
           available: true,
         },
       ],

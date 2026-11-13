@@ -37,6 +37,7 @@ test('resolveCitations accepts real retrieved chunk IDs and rejects invented IDs
       documentId: 'doc-reglamento',
       page: 4,
       text: 'Las inscripciones abren el 15 de agosto.',
+      score: 0.92,
       available: true,
     },
     {
@@ -44,6 +45,7 @@ test('resolveCitations accepts real retrieved chunk IDs and rejects invented IDs
       documentId: 'doc-calendario',
       page: 2,
       text: 'El examen final se realiza el 10 de diciembre.',
+      score: 0.87,
       available: true,
     },
   ]);
@@ -74,6 +76,7 @@ test('validateStatementCitations validates citations per statement against retri
         documentId: 'doc-reglamento',
         page: 4,
         text: 'Las inscripciones abren el 15 de agosto.',
+        score: 0.92,
         available: true,
       },
     ],

@@ -143,6 +143,7 @@ test('POST /api/chat/answers streams status, progressive text chunks, and final 
           documentName: 'manual-academico.pdf',
           page: 5,
           text: 'El semestre inicia el 12 de agosto.',
+          score: 0.95,
           available: true,
         },
       ],

@@ -3,6 +3,8 @@ export interface AnswerSource {
   documentId: string;
   page: number;
   text: string;
+  // Cosine similarity of this chunk to the question, from the search (spec 004).
+  score: number;
 }
 
 export type AnswerEvent =

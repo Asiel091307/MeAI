@@ -38,6 +38,7 @@ test('GeminiAnswerGenerator sends request containing only valid sources and the 
       documentId: 'doc-1',
       page: 1,
       text: 'La solicitud se presenta en septiembre.',
+      score: 0.9,
     },
   ];
 
@@ -92,7 +93,7 @@ test('GeminiAnswerGenerator strips invented citations not present in sources', a
   });
 
   const sources: AnswerSource[] = [
-    { id: 'chunk-1', documentId: 'doc-1', page: 1, text: 'Texto de prueba.' },
+    { id: 'chunk-1', documentId: 'doc-1', page: 1, text: 'Texto de prueba.', score: 0.9 },
   ];
 
   const events = [];
@@ -130,8 +131,8 @@ test('GeminiAnswerGenerator emits text chunks progressively as SSE arrives and h
   });
 
   const sources: AnswerSource[] = [
-    { id: 'chunk-1', documentId: 'doc-1', page: 1, text: 'El plazo vence el viernes.' },
-    { id: 'chunk-2', documentId: 'doc-2', page: 3, text: 'Se entrega en ventanilla.' },
+    { id: 'chunk-1', documentId: 'doc-1', page: 1, text: 'El plazo vence el viernes.', score: 0.9 },
+    { id: 'chunk-2', documentId: 'doc-2', page: 3, text: 'Se entrega en ventanilla.', score: 0.9 },
   ];
 
   const iterator = generator.stream('¿Cuándo vence y dónde se entrega?', sources)[Symbol.asyncIterator]();
@@ -193,7 +194,7 @@ test('GeminiAnswerGenerator produces empty citations when evidence is insufficie
   });
 
   const sources: AnswerSource[] = [
-    { id: 'chunk-1', documentId: 'doc-1', page: 1, text: 'Información sobre astronomía.' },
+    { id: 'chunk-1', documentId: 'doc-1', page: 1, text: 'Información sobre astronomía.', score: 0.9 },
   ];
 
   const events = [];

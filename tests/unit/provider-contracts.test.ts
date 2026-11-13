@@ -15,6 +15,7 @@ test('RAG use cases can combine independent provider contracts without a concret
   };
   const source: AnswerSource = {
     id: 'chunk-1', documentId: 'document-1', page: 2, text: 'Texto reconocido',
+    score: 0.9,
   };
   const generator: AnswerGenerator = {
     async *stream(question, sources) {
