@@ -6,21 +6,21 @@ Columna **Carril**: **I** = integrador (archivos compartidos), **A** = datos y c
 
 ## 1. Contratos (integrador, antes que nada)
 
-- [ ] T004-01. **I.** Añadir `score: number` a `AnswerSource` (`src/rag/providers/generation.ts`) y a `ResolvedCitation` (`src/rag/answering/citation-validation.ts`); `resolveCitations` lo copia. Ajustar los fakes de los tests que construyen esos tipos. **RF-004-6.**
+- [x] T004-01. **I.** Añadir `score: number` a `AnswerSource` (`src/rag/providers/generation.ts`) y a `ResolvedCitation` (`src/rag/answering/citation-validation.ts`); `resolveCitations` lo copia. Ajustar los fakes de los tests que construyen esos tipos. **RF-004-6.**
   Hecho cuando: un test unitario comprueba que `resolveCitations` conserva `score` y sigue descartando ids inventados; typecheck y `pnpm test` en verde.
 
 ## 2. Datos y casos de uso (carril A)
 
-- [ ] T004-02. **A.** `toAnswerSource` pasa `score` del `RetrievedChunk`. **RF-004-6.**
+- [x] T004-02. **A.** `toAnswerSource` pasa `score` del `RetrievedChunk`. **RF-004-6.**
   Hecho cuando: `u/citation-score.test.ts` verifica que el `score` de la búsqueda llega intacto al `AnswerSource`.
-- [ ] T004-03. **A.** Caso de uso `getDocumentFile(id, documents)` en `src/documents/get-document-file.ts`: devuelve `found` (con nombre y bytes) o `not_found`; un id no UUID no llama al repositorio. **RF-004-5.**
+- [x] T004-03. **A.** Caso de uso `getDocumentFile(id, documents)` en `src/documents/get-document-file.ts`: devuelve `found` (con nombre y bytes) o `not_found`; un id no UUID no llama al repositorio. **RF-004-5.**
   Hecho cuando: `u/get-document-file.test.ts` cubre los dos resultados y el UUID inválido.
 
 ## 3. Ruta del archivo (carril B; depende de T004-03)
 
-- [ ] T004-04. **B.** `GET /api/documents/[id]/file`: `200` con bytes, `Content-Type: application/pdf`, `Content-Disposition: inline; filename*=UTF-8''…`, `X-Content-Type-Options: nosniff` y `Cache-Control: no-store`; `404` y `500` en español. **RF-004-5.**
+- [x] T004-04. **B.** `GET /api/documents/[id]/file`: `200` con bytes, `Content-Type: application/pdf`, `Content-Disposition: inline; filename*=UTF-8''…`, `X-Content-Type-Options: nosniff` y `Cache-Control: no-store`; `404` y `500` en español. **RF-004-5.**
   Hecho cuando: `u/document-file-route.test.ts` cubre `404`/`500` y `i/document-file-route.test.mjs` (PostgreSQL real) comprueba los bytes idénticos, las cabeceras y un nombre con acentos.
-- [ ] T004-05. **B.** El evento `final` del chat lleva `score` en cada cita. **RF-004-6.**
+- [x] T004-05. **B.** El evento `final` del chat lleva `score` en cada cita. **RF-004-6.**
   Hecho cuando: `u/chat-answers-route.test.ts` ampliado lo comprueba de punta a punta (búsqueda simulada → SSE).
 
 ## 4. Partir la conversación (carril B)
