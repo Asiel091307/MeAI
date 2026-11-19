@@ -115,3 +115,7 @@ Una vez aprobada la elección por el usuario:
 - **Modalidad de coste y privacidad:** Nivel gratuito (Free Tier) de Google AI Studio (\$0.00 USD), aceptado por el usuario. **Riesgo aceptado (RNF-7):** en el Free Tier, Google puede usar el contenido enviado (fragmentos de los PDF y preguntas) para mejorar sus productos, con posible revisión humana. Por eso este MVP debe usarse con PDF no sensibles. Para documentos personales confidenciales, activar la facturación (Paid Tier) con la misma `GEMINI_API_KEY`; en ese nivel Google no usa los datos para entrenar modelos.
 - **Estado:** **Aprobada por el usuario el `2026-11-09`.**
 
+
+## Nota (2026-11-18)
+
+Desde la spec 012, quien instala MeAI puede elegir otro proveedor (cualquier servicio compatible con OpenAI, incluido Ollama local) mediante `.env`. Esta spec 002 sigue definiendo la configuración predeterminada: Gemini con `gemini-embedding-001` (1536) y `gemini-3.5-flash-lite`.

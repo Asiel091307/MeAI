@@ -37,8 +37,8 @@ La prioridad es que cada cambio sea pequeño, comprensible y explicable para una
 
 ## Modelos de IA
 
-- OpenAI y Gemini son los proveedores candidatos para embeddings y generación.
-- No seleccionar ni cambiar un modelo sin una spec aprobada para esa integración.
+- Los proveedores son configurables por quien instala MeAI (spec 012): Gemini o cualquier servicio compatible con OpenAI (OpenAI, Ollama, LM Studio, OpenRouter, Groq…). Gemini con `gemini-embedding-001` y `gemini-3.5-flash-lite` es la configuración predeterminada (spec 002).
+- No añadir otro tipo de proveedor ni cambiar los modelos predeterminados sin una spec aprobada.
 - Antes de decidir, consultar documentación oficial vigente y comparar nivel gratuito, precio, límites, privacidad, dimensiones de embeddings y calidad esperada.
 - Presentar la comparación al usuario y esperar su decisión antes de implementar el proveedor.
 - Configurar proveedor, modelo y credenciales mediante variables de entorno; nunca incluir secretos en el repositorio.
