@@ -6,6 +6,13 @@ import { test } from 'vitest';
 const exec = promisify(execFile);
 
 test('the application runs in Compose and reaches PostgreSQL', async () => {
+  // Use the developer's .env password when there is one: an explicit POSTGRES_PASSWORD wins over
+  // .env in Compose, and the wrong one would recreate the local app unable to log in to its volume.
+  try {
+    process.loadEnvFile('.env');
+  } catch {
+    // No .env (CI): a throwaway password is fine for a fresh volume.
+  }
   const env = {
     ...process.env,
     POSTGRES_PASSWORD: process.env.POSTGRES_PASSWORD ?? 'test-only-password',
@@ -14,7 +21,8 @@ test('the application runs in Compose and reaches PostgreSQL', async () => {
     cwd: process.cwd(),
     env,
     encoding: 'utf8',
-    timeout: 210_000,
+    // The first production build (install, next build, OCR data) takes several minutes.
+    timeout: 900_000,
   })).stdout;
 
   assert.match(await compose('config', '--services'), /^app$/m);
@@ -45,4 +53,4 @@ test('the application runs in Compose and reaches PostgreSQL', async () => {
     socket.on('timeout', () => { socket.destroy(new Error('PostgreSQL did not respond')); });
   `;
   assert.match(await compose('exec', '-T', 'app', 'node', '-e', probe), /postgres reachable/);
-}, 240_000);
+}, 960_000);

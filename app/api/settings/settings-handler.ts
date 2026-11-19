@@ -23,10 +23,16 @@ export function createGetSettingsHandler(deps: SettingsHandlerDeps) {
       return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
     const settings = toPublicAiSettings(config);
-    const documentsWithOtherModel = await deps.countDocumentsWithOtherModel(
-      settings.embedding.model,
-      settings.embedding.dimensions,
-    );
+    let documentsWithOtherModel = 0;
+    try {
+      documentsWithOtherModel = await deps.countDocumentsWithOtherModel(
+        settings.embedding.model,
+        settings.embedding.dimensions,
+      );
+    } catch (error) {
+      // The provider settings are still worth showing; the library already reports the database.
+      console.error('Could not count documents indexed with another embedding model:', error);
+    }
     return NextResponse.json({ ...settings, documentsWithOtherModel });
   };
 }

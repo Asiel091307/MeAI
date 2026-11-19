@@ -44,3 +44,15 @@ test('an invalid value answers 500 with the variable name', async () => {
   expect(response.status).toBe(500);
   expect((await response.json()).error).toMatch(/EMBEDDING_PROVIDER/);
 });
+
+test('a database failure still returns the provider settings', async () => {
+  const handler = createGetSettingsHandler({
+    loadConfig: () => loadAiConfig({ GEMINI_API_KEY: SECRET }),
+    countDocumentsWithOtherModel: async () => {
+      throw new Error('password authentication failed');
+    },
+  });
+  const response = await handler();
+  expect(response.status).toBe(200);
+  expect((await response.json()).documentsWithOtherModel).toBe(0);
+});
