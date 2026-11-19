@@ -1,7 +1,11 @@
 // @vitest-environment happy-dom
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import HomePage from '../../../app/page';
+
+beforeEach(() => {
+  Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1280 });
+});
 
 afterEach(() => {
   cleanup();
@@ -9,7 +13,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-test('a confirmed delete in the documents panel marks the chat citation as unavailable (RF-5.6, CL-5)', async () => {
+test('a confirmed delete in the library marks the chat citation as unavailable (RF-5.6, CL-5)', async () => {
   const documents = [
     {
       id: 'doc-x',
@@ -34,6 +38,7 @@ test('a confirmed delete in the documents panel marks the chat citation as unava
               documentId: 'doc-x',
               documentName: 'manual.pdf',
               page: 2,
+              score: 0.8,
               text: 'Texto.',
               available: true,
             },
@@ -58,16 +63,19 @@ test('a confirmed delete in the documents panel marks the chat citation as unava
     target: { value: '¿Qué dice el manual?' },
   });
   fireEvent.click(screen.getByRole('button', { name: 'Enviar pregunta' }));
-  expect(await screen.findByText(/Fuente: manual\.pdf — Página 2/)).toBeTruthy();
+  expect(await screen.findByRole('button', { name: 'Fuente 1: manual.pdf, página 2' })).toBeTruthy();
 
-  fireEvent.click(await screen.findByRole('button', { name: 'Eliminar manual.pdf' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Confirmar eliminación' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Más acciones de manual.pdf' }));
+  fireEvent.click(screen.getByRole('menuitem', { name: 'Eliminar manual.pdf' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Confirmar: eliminar manual.pdf' }));
 
   expect(
-    await screen.findByText('Fuente no disponible (documento eliminado): manual.pdf — Página 2'),
+    await screen.findByRole('button', {
+      name: 'Fuente 1 no disponible (documento eliminado): manual.pdf, página 2',
+    }),
   ).toBeTruthy();
   expect(screen.getByText('Respuesta con fuente.')).toBeTruthy();
   await waitFor(() => {
-    expect(screen.queryByRole('button', { name: 'Eliminar manual.pdf' })).toBeNull();
+    expect(screen.queryByRole('article', { name: 'manual.pdf' })).toBeNull();
   });
 });

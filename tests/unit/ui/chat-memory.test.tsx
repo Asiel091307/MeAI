@@ -1,7 +1,33 @@
 // @vitest-environment happy-dom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
-import { ChatPanel } from '../../../components/chat-panel';
+import { AppShell } from '../../../components/app-shell';
+
+const AVAILABLE_DOCUMENTS = [
+  {
+    id: 'doc-1',
+    name: 'doc.pdf',
+    status: 'available',
+    error: null,
+    activeVersionId: 'ver-1',
+    createdAt: '2026-11-10T10:00:00.000Z',
+  },
+];
+
+// Routes the library listing to one available document and the chat to the given handler,
+// so the shell never blocks a question for lack of documents.
+function shellFetch(chatFetch: typeof fetch) {
+  return vi.fn<typeof fetch>(async (input, init) => {
+    if (String(input) === '/api/chat/answers') {
+      return chatFetch(input, init);
+    }
+    return new Response(JSON.stringify({ documents: AVAILABLE_DOCUMENTS, message: null }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  });
+}
+
 
 afterEach(() => {
   cleanup();
@@ -11,7 +37,7 @@ afterEach(() => {
 test('keeps conversation messages in tab memory across turns and discards them upon page reload (T47)', async () => {
   const capturedBodies: Array<{ question: string; history: unknown[] }> = [];
 
-  const mockFetch = vi.fn<typeof fetch>(async (_url, init) => {
+  const chatFetch = vi.fn<typeof fetch>(async (_url, init) => {
     const body = JSON.parse(String(init?.body));
     capturedBodies.push(body);
 
@@ -24,7 +50,7 @@ test('keeps conversation messages in tab memory across turns and discards them u
     const ssePayload = [
       'data: {"type":"status","phase":"searching","message":"Buscando evidencia..."}\n\n',
       `data: {"type":"text","text":"${answerText}"}\n\n`,
-      `data: {"type":"final","text":"${answerText}","citations":[{"chunkId":"c-${turnNumber}","documentId":"doc-1","documentName":"becas.pdf","page":${turnNumber},"text":"${answerText}","available":true}]}\n\n`,
+      `data: {"type":"final","text":"${answerText}","citations":[{"chunkId":"c-${turnNumber}","documentId":"doc-1","documentName":"becas.pdf","page":${turnNumber},"score":0.8,"text":"${answerText}","available":true}]}\n\n`,
     ].join('');
 
     return new Response(ssePayload, {
@@ -33,30 +59,33 @@ test('keeps conversation messages in tab memory across turns and discards them u
     });
   });
 
-  const { unmount } = render(<ChatPanel fetchFn={mockFetch} />);
+  const mockFetch = shellFetch(chatFetch);
+  const { unmount } = render(<AppShell fetchFn={mockFetch} />);
+  const history = () => within(screen.getByLabelText('Historial de conversación'));
 
   // First turn
-  const input = screen.getByLabelText(/escribe tu pregunta|pregunta/i);
+  const input = screen.getByLabelText('Escribe tu pregunta');
   fireEvent.change(input, { target: { value: '¿Qué porcentaje cubre la beca?' } });
   fireEvent.click(screen.getByRole('button', { name: /enviar pregunta/i }));
 
-  expect(await screen.findByText('La beca cubre el 80% de la colegiatura.')).toBeTruthy();
+  expect(await history().findByText('La beca cubre el 80% de la colegiatura.')).toBeTruthy();
 
   // Second turn (follow-up in the same tab session)
   fireEvent.change(input, { target: { value: '¿Y cómo se renueva?' } });
   fireEvent.click(screen.getByRole('button', { name: /enviar pregunta/i }));
 
   expect(
-    await screen.findByText('Para renovarla se requiere mantener promedio de 9.0.'),
+    await history().findByText('Para renovarla se requiere mantener promedio de 9.0.'),
   ).toBeTruthy();
 
   // Both turns are visible in the same tab
-  expect(screen.getByText('¿Qué porcentaje cubre la beca?')).toBeTruthy();
-  expect(screen.getByText('La beca cubre el 80% de la colegiatura.')).toBeTruthy();
-  expect(screen.getByText('¿Y cómo se renueva?')).toBeTruthy();
+  expect(history().getByText('¿Qué porcentaje cubre la beca?')).toBeTruthy();
+  expect(history().getByText('La beca cubre el 80% de la colegiatura.')).toBeTruthy();
+  expect(history().getByText('¿Y cómo se renueva?')).toBeTruthy();
 
   // Second request included the history from the first turn
   expect(capturedBodies).toHaveLength(2);
+  expect(chatFetch).toHaveBeenCalledTimes(2);
   expect(capturedBodies[1].history).toHaveLength(2);
 
   // Nothing persisted in localStorage or sessionStorage
@@ -65,7 +94,7 @@ test('keeps conversation messages in tab memory across turns and discards them u
 
   // Simulate reloading the tab (unmount and mount a fresh instance)
   unmount();
-  render(<ChatPanel fetchFn={mockFetch} />);
+  render(<AppShell fetchFn={mockFetch} />);
 
   await waitFor(() => {
     expect(screen.queryByText('¿Qué porcentaje cubre la beca?')).toBeNull();

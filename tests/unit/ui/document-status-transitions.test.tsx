@@ -2,7 +2,7 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
 import type { PublicDocumentItem } from '../../../app/api/documents/list-documents-handler';
-import { DocumentsPanel } from '../../../components/documents-panel';
+import { AppShell } from '../../../components/app-shell';
 
 afterEach(() => {
   cleanup();
@@ -33,20 +33,22 @@ test('reflects transition from processing to available without reloading the pag
             createdAt: '2026-11-10T12:00:00.000Z',
           };
 
-    return new Response(
-      JSON.stringify({ documents: [doc], message: null }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
-    );
+    return new Response(JSON.stringify({ documents: [doc], message: null }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   });
 
-  render(<DocumentsPanel fetchFn={mockFetch} pollIntervalMs={30} />);
+  render(<AppShell fetchFn={mockFetch} pollIntervalMs={30} />);
 
   // Initially renders in 'processing' state
-  expect(await screen.findByText('En procesamiento')).toBeTruthy();
+  await waitFor(() => {
+    expect(screen.getByLabelText('Estado de guia-estudio.pdf').textContent).toBe('En procesamiento');
+  });
 
   // Transitions to 'available' automatically without page reload
   await waitFor(() => {
-    expect(screen.getByText('Disponible')).toBeTruthy();
+    expect(screen.getByLabelText('Estado de guia-estudio.pdf').textContent).toBe('Disponible');
   });
   expect(screen.queryByText('En procesamiento')).toBeNull();
 });
@@ -75,21 +77,23 @@ test('reflects transition from processing to failed and displays the Spanish cau
             createdAt: '2026-11-10T12:05:00.000Z',
           };
 
-    return new Response(
-      JSON.stringify({ documents: [doc], message: null }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
-    );
+    return new Response(JSON.stringify({ documents: [doc], message: null }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   });
 
-  render(<DocumentsPanel fetchFn={mockFetch} pollIntervalMs={30} />);
-
-  expect(await screen.findByText('En procesamiento')).toBeTruthy();
+  render(<AppShell fetchFn={mockFetch} pollIntervalMs={30} />);
 
   await waitFor(() => {
-    expect(screen.getByText('Fallido')).toBeTruthy();
+    expect(screen.getByLabelText('Estado de escaneo-borroso.pdf').textContent).toBe('En procesamiento');
   });
 
-  expect(
-    screen.getByText('La página 2 no contiene texto legible tras aplicar OCR.'),
-  ).toBeTruthy();
+  await waitFor(() => {
+    expect(screen.getByLabelText('Estado de escaneo-borroso.pdf').textContent).toBe('Fallido');
+  });
+
+  expect(screen.getByRole('note').textContent).toBe(
+    'La página 2 no contiene texto legible tras aplicar OCR.',
+  );
 });

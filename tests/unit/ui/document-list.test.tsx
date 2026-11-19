@@ -1,19 +1,30 @@
 // @vitest-environment happy-dom
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
-import { EMPTY_DOCUMENTS_MESSAGE, type PublicDocumentItem } from '../../../app/api/documents/list-documents-handler';
-import { DocumentList } from '../../../components/document-list';
-import { DocumentsPanel } from '../../../components/documents-panel';
+import type { PublicDocumentItem } from '../../../app/api/documents/list-documents-handler';
+import { AppShell } from '../../../components/app-shell';
 
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
 });
 
-test('shows the empty state inviting the user to upload their first PDF when the list is empty', () => {
-  render(<DocumentList documents={[]} />);
+const EMPTY_LIBRARY_TEXT = /Aún no hay documentos\. Arrastra un archivo/;
 
-  expect(screen.getByText(EMPTY_DOCUMENTS_MESSAGE)).toBeTruthy();
+function listFetch(documents: PublicDocumentItem[]) {
+  return vi.fn<typeof fetch>(async () => {
+    return new Response(JSON.stringify({ documents, message: null }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  });
+}
+
+test('shows the empty state inviting the user to upload their first PDF when the list is empty', () => {
+  render(<AppShell fetchFn={listFetch([])} initialDocuments={[]} pollIntervalMs={0} />);
+
+  expect(screen.getByText(EMPTY_LIBRARY_TEXT)).toBeTruthy();
+  expect(screen.getByLabelText('Subir documentos')).toBeTruthy();
 });
 
 test('shows the received documents with their Spanish status labels', () => {
@@ -44,32 +55,24 @@ test('shows the received documents with their Spanish status labels', () => {
     },
   ];
 
-  render(<DocumentList documents={documents} />);
+  render(<AppShell fetchFn={listFetch(documents)} initialDocuments={documents} pollIntervalMs={0} />);
 
-  expect(screen.getByText('manual-rag.pdf')).toBeTruthy();
-  expect(screen.getByText('Disponible')).toBeTruthy();
+  expect(screen.getByRole('article', { name: 'manual-rag.pdf' })).toBeTruthy();
+  expect(screen.getByLabelText('Estado de manual-rag.pdf').textContent).toBe('Disponible');
 
-  expect(screen.getByText('escaneo.pdf')).toBeTruthy();
-  expect(screen.getByText('En procesamiento')).toBeTruthy();
+  expect(screen.getByRole('article', { name: 'escaneo.pdf' })).toBeTruthy();
+  expect(screen.getByLabelText('Estado de escaneo.pdf').textContent).toBe('En procesamiento');
 
-  expect(screen.getByText('protegido.pdf')).toBeTruthy();
-  expect(screen.getByText('Fallido')).toBeTruthy();
-  expect(screen.getByText('El archivo PDF está protegido con contraseña.')).toBeTruthy();
+  expect(screen.getByRole('article', { name: 'protegido.pdf' })).toBeTruthy();
+  expect(screen.getByLabelText('Estado de protegido.pdf').textContent).toBe('Fallido');
+  expect(screen.getByRole('note').textContent).toBe('El archivo PDF está protegido con contraseña.');
 });
 
-test('DocumentsPanel loads and displays the empty state from GET /api/documents', async () => {
-  const mockFetch = vi.fn<typeof fetch>(async () => {
-    return new Response(
-      JSON.stringify({
-        documents: [],
-        message: EMPTY_DOCUMENTS_MESSAGE,
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
-    );
-  });
+test('the app loads and displays the empty state from GET /api/documents', async () => {
+  const mockFetch = listFetch([]);
 
-  render(<DocumentsPanel fetchFn={mockFetch} />);
+  render(<AppShell fetchFn={mockFetch} pollIntervalMs={0} />);
 
-  expect(await screen.findByText(EMPTY_DOCUMENTS_MESSAGE)).toBeTruthy();
+  expect(await screen.findByText(EMPTY_LIBRARY_TEXT)).toBeTruthy();
   expect(mockFetch).toHaveBeenCalledWith('/api/documents', expect.objectContaining({ cache: 'no-store' }));
 });

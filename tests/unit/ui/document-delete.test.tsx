@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
 import type { PublicDocumentItem } from '../../../app/api/documents/list-documents-handler';
-import { DocumentsPanel } from '../../../components/documents-panel';
+import { AppShell } from '../../../components/app-shell';
 
 afterEach(() => {
   cleanup();
@@ -20,28 +20,38 @@ const initialDocs: PublicDocumentItem[] = [
   },
 ];
 
-test('asks for confirmation before deleting and cancels without calling DELETE', async () => {
-  const mockFetch = vi.fn<typeof fetch>(async () => {
-    return new Response(
-      JSON.stringify({ documents: initialDocs, message: null }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
-    );
+const CONFIRMATION_TEXT =
+  '¿Eliminar este documento? Se borran el PDF, sus fragmentos y sus embeddings. No se puede deshacer.';
+
+function listResponse(): Response {
+  return new Response(JSON.stringify({ documents: initialDocs, message: null }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
   });
+}
 
-  render(<DocumentsPanel fetchFn={mockFetch} initialDocuments={initialDocs} />);
+// Opens the card menu of contrato.pdf and starts the delete flow (shows the inline confirmation).
+async function startDelete() {
+  fireEvent.click(await screen.findByRole('button', { name: 'Más acciones de contrato.pdf' }));
+  fireEvent.click(screen.getByRole('menuitem', { name: 'Eliminar contrato.pdf' }));
+}
 
-  const deleteButton = await screen.findByRole('button', { name: /eliminar contrato\.pdf/i });
-  fireEvent.click(deleteButton);
+test('asks for confirmation before deleting and cancels without calling DELETE', async () => {
+  const mockFetch = vi.fn<typeof fetch>(async () => listResponse());
 
-  // Shows confirmation dialog/controls
-  expect(screen.getByText(/¿confirmas que deseas eliminar contrato\.pdf\?/i)).toBeTruthy();
+  render(<AppShell fetchFn={mockFetch} initialDocuments={initialDocs} pollIntervalMs={0} />);
 
-  const cancelButton = screen.getByRole('button', { name: /cancelar/i });
-  fireEvent.click(cancelButton);
+  await startDelete();
+
+  // Shows the inline confirmation
+  expect(screen.getByText(CONFIRMATION_TEXT)).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Confirmar: eliminar contrato.pdf' })).toBeTruthy();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
 
   // Confirmation is dismissed and DELETE was never called
-  expect(screen.queryByText(/¿confirmas que deseas eliminar contrato\.pdf\?/i)).toBeNull();
-  expect(screen.getByText('contrato.pdf')).toBeTruthy();
+  expect(screen.queryByText(CONFIRMATION_TEXT)).toBeNull();
+  expect(screen.getByRole('article', { name: 'contrato.pdf' })).toBeTruthy();
   const deleteCalls = mockFetch.mock.calls.filter(([, init]) => init?.method === 'DELETE');
   expect(deleteCalls).toHaveLength(0);
 });
@@ -56,47 +66,42 @@ test('keeps the document in the list and displays an error when deletion fails',
         { status: 500, headers: { 'Content-Type': 'application/json' } },
       );
     }
-    return new Response(
-      JSON.stringify({ documents: initialDocs, message: null }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
-    );
+    return listResponse();
   });
 
-  render(<DocumentsPanel fetchFn={mockFetch} initialDocuments={initialDocs} />);
+  render(<AppShell fetchFn={mockFetch} initialDocuments={initialDocs} pollIntervalMs={0} />);
 
-  fireEvent.click(await screen.findByRole('button', { name: /eliminar contrato\.pdf/i }));
-  fireEvent.click(screen.getByRole('button', { name: /confirmar eliminación/i }));
+  await startDelete();
+  fireEvent.click(screen.getByRole('button', { name: 'Confirmar: eliminar contrato.pdf' }));
 
   const alert = await screen.findByRole('alert');
   expect(alert.textContent).toContain('No se pudo eliminar el documento');
-  expect(screen.getByText('contrato.pdf')).toBeTruthy();
+  expect(screen.getByRole('article', { name: 'contrato.pdf' })).toBeTruthy();
 });
 
 test('removes the document from the list only after confirmed DELETE succeeds with 204', async () => {
-  const onDocumentDeleted = vi.fn();
   const mockFetch = vi.fn<typeof fetch>(async (_url, init) => {
     if (init?.method === 'DELETE') {
       return new Response(null, { status: 204 });
     }
-    return new Response(
-      JSON.stringify({ documents: initialDocs, message: null }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
-    );
+    return listResponse();
   });
 
-  render(
-    <DocumentsPanel
-      fetchFn={mockFetch}
-      initialDocuments={initialDocs}
-      onDocumentDeleted={onDocumentDeleted}
-    />,
-  );
+  render(<AppShell fetchFn={mockFetch} initialDocuments={initialDocs} pollIntervalMs={0} />);
 
-  fireEvent.click(await screen.findByRole('button', { name: /eliminar contrato\.pdf/i }));
-  fireEvent.click(screen.getByRole('button', { name: /confirmar eliminación/i }));
+  await startDelete();
+
+  // Nothing is deleted until the user confirms
+  expect(mockFetch.mock.calls.filter(([, init]) => init?.method === 'DELETE')).toHaveLength(0);
+  expect(screen.getByRole('article', { name: 'contrato.pdf' })).toBeTruthy();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Confirmar: eliminar contrato.pdf' }));
 
   await waitFor(() => {
-    expect(screen.queryByText('contrato.pdf')).toBeNull();
+    expect(screen.queryByRole('article', { name: 'contrato.pdf' })).toBeNull();
   });
-  expect(onDocumentDeleted).toHaveBeenCalledWith('11111111-2222-3333-4444-555555555555');
+  expect(mockFetch).toHaveBeenCalledWith(
+    '/api/documents/11111111-2222-3333-4444-555555555555',
+    expect.objectContaining({ method: 'DELETE' }),
+  );
 });

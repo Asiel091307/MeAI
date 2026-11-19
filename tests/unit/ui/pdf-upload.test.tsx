@@ -1,18 +1,28 @@
 // @vitest-environment happy-dom
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
-import { PdfUploader } from '../../../components/pdf-uploader';
+import { AppShell } from '../../../components/app-shell';
 
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
 });
 
-test('selecting a PDF and submitting sends a POST request to /api/documents with the file', async () => {
+function emptyListResponse(): Response {
+  return new Response(JSON.stringify({ documents: [], message: null }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+test('selecting a PDF sends a POST request to /api/documents with the file and lists the new document', async () => {
   let capturedUrl = '';
   let capturedInit: RequestInit | undefined;
 
   const mockFetch = vi.fn<typeof fetch>(async (url, init) => {
+    if (init?.method !== 'POST') {
+      return emptyListResponse();
+    }
     capturedUrl = String(url);
     capturedInit = init;
     return new Response(
@@ -30,23 +40,17 @@ test('selecting a PDF and submitting sends a POST request to /api/documents with
     );
   });
 
-  const onDocumentRegistered = vi.fn();
+  render(<AppShell fetchFn={mockFetch} pollIntervalMs={0} />);
 
-  render(<PdfUploader fetchFn={mockFetch} onDocumentRegistered={onDocumentRegistered} />);
-
-  const input = screen.getByLabelText(/seleccionar pdf|archivo pdf/i) as HTMLInputElement;
+  const input = screen.getByLabelText('Subir documentos') as HTMLInputElement;
+  expect(input.multiple).toBe(true);
   const pdfFile = new File(['%PDF-1.4 contenido'], 'apuntes.pdf', { type: 'application/pdf' });
 
   fireEvent.change(input, { target: { files: [pdfFile] } });
 
-  const submitButton = screen.getByRole('button', { name: /subir pdf/i });
-  fireEvent.click(submitButton);
-
   await waitFor(() => {
-    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(capturedUrl).toBe('/api/documents');
   });
-
-  expect(capturedUrl).toBe('/api/documents');
   expect(capturedInit?.method).toBe('POST');
   expect(capturedInit?.body).toBeInstanceOf(FormData);
 
@@ -55,19 +59,16 @@ test('selecting a PDF and submitting sends a POST request to /api/documents with
   expect(uploadedFile).toBeTruthy();
   expect(uploadedFile.name).toBe('apuntes.pdf');
 
-  await waitFor(() => {
-    expect(onDocumentRegistered).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'doc-123',
-        name: 'apuntes.pdf',
-        status: 'processing',
-      }),
-    );
-  });
+  // The registered document appears in the library as processing
+  expect(await screen.findByRole('article', { name: 'apuntes.pdf' })).toBeTruthy();
+  expect(screen.getByLabelText('Estado de apuntes.pdf').textContent).toBe('En procesamiento');
 });
 
-test('shows the rejection reason in Spanish when the upload returns 400', async () => {
-  const mockFetch = vi.fn<typeof fetch>(async () => {
+test('shows the rejection reason in Spanish, with the file name, when the upload returns 400', async () => {
+  const mockFetch = vi.fn<typeof fetch>(async (_url, init) => {
+    if (init?.method !== 'POST') {
+      return emptyListResponse();
+    }
     return new Response(
       JSON.stringify({
         error: 'El archivo supera el tamaño máximo permitido de 10 MB.',
@@ -76,14 +77,14 @@ test('shows the rejection reason in Spanish when the upload returns 400', async 
     );
   });
 
-  render(<PdfUploader fetchFn={mockFetch} />);
+  render(<AppShell fetchFn={mockFetch} pollIntervalMs={0} />);
 
-  const input = screen.getByLabelText(/seleccionar pdf|archivo pdf/i) as HTMLInputElement;
+  const input = screen.getByLabelText('Subir documentos') as HTMLInputElement;
   const largeFile = new File(['%PDF-1.4'], 'grande.pdf', { type: 'application/pdf' });
 
   fireEvent.change(input, { target: { files: [largeFile] } });
-  fireEvent.click(screen.getByRole('button', { name: /subir pdf/i }));
 
   const alert = await screen.findByRole('alert');
-  expect(alert.textContent).toContain('El archivo supera el tamaño máximo permitido de 10 MB.');
+  expect(alert.textContent).toBe('grande.pdf: El archivo supera el tamaño máximo permitido de 10 MB.');
+  expect(screen.queryByRole('article', { name: 'grande.pdf' })).toBeNull();
 });

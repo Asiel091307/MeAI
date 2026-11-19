@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
 import type { PublicDocumentItem } from '../../../app/api/documents/list-documents-handler';
-import { DocumentsPanel } from '../../../components/documents-panel';
+import { AppShell } from '../../../components/app-shell';
 
 afterEach(() => {
   cleanup();
@@ -42,22 +42,23 @@ test('shows reprocess action for available and failed documents and reflects pro
       );
     }
 
-    return new Response(
-      JSON.stringify({ documents: initialDocs, message: null }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
-    );
+    return new Response(JSON.stringify({ documents: initialDocs, message: null }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   });
 
-  render(<DocumentsPanel fetchFn={mockFetch} initialDocuments={initialDocs} pollIntervalMs={0} />);
+  render(<AppShell fetchFn={mockFetch} initialDocuments={initialDocs} pollIntervalMs={0} />);
 
-  // Both failed and available documents show a Reprocesar button
-  const reprocessFailedBtn = await screen.findByRole('button', { name: /reprocesar fallido\.pdf/i });
-  const reprocessAvailableBtn = screen.getByRole('button', { name: /reprocesar disponible\.pdf/i });
+  // Both failed and available documents show a Reprocesar action in their menu
+  fireEvent.click(await screen.findByRole('button', { name: 'Más acciones de disponible.pdf' }));
+  expect(screen.getByRole('menuitem', { name: 'Reprocesar disponible.pdf' })).toBeTruthy();
 
-  expect(reprocessFailedBtn).toBeTruthy();
-  expect(reprocessAvailableBtn).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Más acciones de fallido.pdf' }));
+  const reprocessFailed = screen.getByRole('menuitem', { name: 'Reprocesar fallido.pdf' });
+  expect(reprocessFailed).toBeTruthy();
 
-  fireEvent.click(reprocessFailedBtn);
+  fireEvent.click(reprocessFailed);
 
   await waitFor(() => {
     expect(screen.getByLabelText('Estado de fallido.pdf').textContent).toBe('En procesamiento');

@@ -1,15 +1,26 @@
 // @vitest-environment happy-dom
-import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, expect, test } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, expect, test, vi } from 'vitest';
 import type { PublicDocumentItem } from '../../../app/api/documents/public-document';
-import { DocumentList } from '../../../components/document-list';
+import { AppShell } from '../../../components/app-shell';
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
 
+function renderLibrary(documents: PublicDocumentItem[]) {
+  const mockFetch = vi.fn<typeof fetch>(async () => {
+    return new Response(JSON.stringify({ documents, message: null }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  });
+  render(<AppShell fetchFn={mockFetch} initialDocuments={documents} pollIntervalMs={0} />);
+}
+
 test('a failed document offers both the reprocess and the delete actions (RF-2.4)', () => {
-  const documents: PublicDocumentItem[] = [
+  renderLibrary([
     {
       id: 'doc-failed',
       name: 'roto.pdf',
@@ -18,16 +29,17 @@ test('a failed document offers both the reprocess and the delete actions (RF-2.4
       activeVersionId: null,
       createdAt: '2026-11-10T10:10:00.000Z',
     },
-  ];
+  ]);
 
-  render(<DocumentList documents={documents} />);
-
-  expect(screen.getByRole('button', { name: 'Reprocesar roto.pdf' })).toBeTruthy();
-  expect(screen.getByRole('button', { name: 'Eliminar roto.pdf' })).toBeTruthy();
+  // The failed card shows its error and a direct retry; reprocess and delete live in the menu
+  expect(screen.getByRole('button', { name: 'Reintentar roto.pdf' })).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Más acciones de roto.pdf' }));
+  expect(screen.getByRole('menuitem', { name: 'Reprocesar roto.pdf' })).toBeTruthy();
+  expect(screen.getByRole('menuitem', { name: 'Eliminar roto.pdf' })).toBeTruthy();
 });
 
 test('an available document with an error from a failed reprocess shows the error and stays available (RF-9.4)', () => {
-  const documents: PublicDocumentItem[] = [
+  renderLibrary([
     {
       id: 'doc-restored',
       name: 'vigente.pdf',
@@ -36,10 +48,12 @@ test('an available document with an error from a failed reprocess shows the erro
       activeVersionId: 'ver-1',
       createdAt: '2026-11-10T10:00:00.000Z',
     },
-  ];
+  ]);
 
-  render(<DocumentList documents={documents} />);
-
-  expect(screen.getByText('Disponible')).toBeTruthy();
-  expect(screen.getByText('El reprocesamiento falló; se conserva la versión anterior.')).toBeTruthy();
+  expect(screen.getByLabelText('Estado de vigente.pdf').textContent).toBe('Disponible');
+  expect(screen.getByRole('note').textContent).toBe(
+    'El reprocesamiento falló; se conserva la versión anterior.',
+  );
+  // It is not failed, so there is no direct retry button
+  expect(screen.queryByRole('button', { name: 'Reintentar vigente.pdf' })).toBeNull();
 });

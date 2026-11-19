@@ -1,12 +1,40 @@
 // @vitest-environment happy-dom
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, expect, test, vi } from 'vitest';
-import { ChatPanel } from '../../../components/chat-panel';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { AppShell } from '../../../components/app-shell';
+
+beforeEach(() => {
+  Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1280 });
+});
 
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
 });
+
+const AVAILABLE_DOCUMENTS = [
+  {
+    id: 'doc-conv',
+    name: 'convocatoria.pdf',
+    status: 'available',
+    error: null,
+    activeVersionId: 'ver-1',
+    createdAt: '2026-11-10T10:00:00.000Z',
+  },
+];
+
+// Routes the library listing to one available document and the chat to the given handler.
+function shellFetch(chatFetch: typeof fetch) {
+  return vi.fn<typeof fetch>(async (input, init) => {
+    if (String(input) === '/api/chat/answers') {
+      return chatFetch(input, init);
+    }
+    return new Response(JSON.stringify({ documents: AVAILABLE_DOCUMENTS, message: null }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  });
+}
 
 test('displays progressive text events before the final event and shows an in-progress indicator while generating (T51, T53)', async () => {
   const encoder = new TextEncoder();
@@ -18,46 +46,48 @@ test('displays progressive text events before the final event and shows an in-pr
     },
   });
 
-  const mockFetch = vi.fn<typeof fetch>(async () => {
+  const chatFetch = vi.fn<typeof fetch>(async () => {
     return new Response(stream, {
       status: 200,
       headers: { 'Content-Type': 'text/event-stream' },
     });
   });
 
-  render(<ChatPanel fetchFn={mockFetch} />);
+  render(<AppShell fetchFn={shellFetch(chatFetch)} />);
 
-  const input = screen.getByLabelText(/escribe tu pregunta|pregunta/i);
+  const input = screen.getByLabelText('Escribe tu pregunta');
   fireEvent.change(input, { target: { value: '¿Cuándo se entregan las solicitudes?' } });
-  fireEvent.click(screen.getByRole('button', { name: /enviar pregunta/i }));
+  fireEvent.click(screen.getByRole('button', { name: 'Enviar pregunta' }));
 
-  // 1. Emit generating status and first partial text chunk while stream remains open
+  // 1. Emit the generating status while the stream remains open: the in-progress indicator shows it
   controller.enqueue(
     encoder.encode(
       'data: {"type":"status","phase":"generating","message":"Generando respuesta fundamentada..."}\n\n',
     ),
   );
+  await waitFor(() => {
+    expect(screen.getByRole('status').textContent).toContain('Generando respuesta fundamentada...');
+  });
+
+  // 2. First partial text chunk: it shows in the provisional region (which replaces the status line)
   controller.enqueue(
     encoder.encode('data: {"type":"text","text":"Las solicitudes se entregan "}\n\n'),
   );
 
-  // Verify progressive text and in-progress indicator are visible BEFORE final event arrives
-  expect(await screen.findByText(/Las solicitudes se entregan/)).toBeTruthy();
-  expect(screen.getByRole('status').textContent).toContain('Generando respuesta fundamentada...');
+  // Verify progressive text is visible BEFORE the final event arrives
+  const provisional = await screen.findByLabelText('Respuesta provisional en curso');
+  expect(provisional.textContent).toContain('Las solicitudes se entregan');
 
-  //While generating, sending a second question is blocked (button is disabled)
+  // While generating, sending a second question is blocked (button is disabled)
   expect(
-    (screen.getByRole('button', { name: /respondiendo|enviar pregunta/i }) as HTMLButtonElement)
-      .disabled,
+    (screen.getByRole('button', { name: 'Enviar pregunta' }) as HTMLButtonElement).disabled,
   ).toBe(true);
 
-  // 2. Emit remaining text and final event with citations (T53)
-  controller.enqueue(
-    encoder.encode('data: {"type":"text","text":"en septiembre."}\n\n'),
-  );
+  // 3. Emit remaining text and final event with citations (T53)
+  controller.enqueue(encoder.encode('data: {"type":"text","text":"en septiembre."}\n\n'));
   controller.enqueue(
     encoder.encode(
-      JSON.stringify({
+      `data: ${JSON.stringify({
         type: 'final',
         text: 'Las solicitudes se entregan en septiembre.',
         citations: [
@@ -66,31 +96,39 @@ test('displays progressive text events before the final event and shows an in-pr
             documentId: 'doc-conv',
             documentName: 'convocatoria.pdf',
             page: 3,
+            score: 0.91,
             text: 'Las solicitudes se entregan en septiembre en ventanilla única.',
             available: true,
           },
         ],
-      }).replace(/^/, 'data: ') + '\n\n',
+      })}\n\n`,
     ),
   );
   controller.close();
 
-  // Verify final answer and its citation with document name, page, and fragment are shown (T53)
+  // Verify the final answer is shown (T53)
   expect(await screen.findByText('Las solicitudes se entregan en septiembre.')).toBeTruthy();
-  expect(screen.getByText(/convocatoria\.pdf/i)).toBeTruthy();
-  expect(screen.getByText(/Página 3/i)).toBeTruthy();
-  expect(screen.getByText(/chunk-conv-3/i)).toBeTruthy();
 
-  // In-progress indicator disappears once finished
+  // The source is a chip with document and page; its evidence card shows document, page,
+  // similarity and the fragment text
+  expect(screen.getByRole('button', { name: 'Fuente 1: convocatoria.pdf, página 3' })).toBeTruthy();
+  expect(screen.getByText('convocatoria.pdf · p. 3')).toBeTruthy();
+  expect(screen.getByText('91%')).toBeTruthy();
+  expect(
+    screen.getByText('Las solicitudes se entregan en septiembre en ventanilla única.'),
+  ).toBeTruthy();
+
+  // In-progress indicator and provisional text disappear once finished
   await waitFor(() => {
     expect(screen.queryByRole('status')).toBeNull();
   });
+  expect(screen.queryByLabelText('Respuesta provisional en curso')).toBeNull();
 });
 
 test('removes partial text when generation fails or is interrupted and shows error with retry option (T52)', async () => {
   let callCount = 0;
 
-  const mockFetch = vi.fn<typeof fetch>(async () => {
+  const chatFetch = vi.fn<typeof fetch>(async () => {
     callCount += 1;
     if (callCount === 1) {
       const sseFailure = [
@@ -114,11 +152,11 @@ test('removes partial text when generation fails or is interrupted and shows err
     });
   });
 
-  render(<ChatPanel fetchFn={mockFetch} />);
+  render(<AppShell fetchFn={shellFetch(chatFetch)} />);
 
-  const input = screen.getByLabelText(/escribe tu pregunta|pregunta/i);
+  const input = screen.getByLabelText('Escribe tu pregunta');
   fireEvent.change(input, { target: { value: '¿Cuál es el horario de atención?' } });
-  fireEvent.click(screen.getByRole('button', { name: /enviar pregunta/i }));
+  fireEvent.click(screen.getByRole('button', { name: 'Enviar pregunta' }));
 
   // Error alert and retry button are displayed
   const alert = await screen.findByRole('alert');
@@ -128,9 +166,9 @@ test('removes partial text when generation fails or is interrupted and shows err
   expect(screen.queryByText(/Texto parcial incompleto que debe retirarse/)).toBeNull();
 
   // Clicking retry re-sends the question and displays the complete answer
-  const retryButton = screen.getByRole('button', { name: /reintentar/i });
+  const retryButton = screen.getByRole('button', { name: 'Reintentar pregunta' });
   fireEvent.click(retryButton);
 
   expect(await screen.findByText('Respuesta completa tras reintentar.')).toBeTruthy();
-  expect(mockFetch).toHaveBeenCalledTimes(2);
+  expect(chatFetch).toHaveBeenCalledTimes(2);
 });

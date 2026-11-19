@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#f4efe4;--panel:#ece5d6;--raise:#fbf8f1;--line:rgba(74,62,40,.13);--text:#2a2a22;--muted:#5e5a4c;--faint:#6e6a5b;--ac:oklch(0.56 0.07 140);--on-ac:#fbf8f1;--ac-bg:oklch(0.56 0.07 140 / .14);--ac-text:oklch(0.42 0.07 140);--err:oklch(0.52 0.12 40);--err-bg:oklch(0.6 0.11 40 / .13);--warn:oklch(0.52 0.1 75);--ok:oklch(0.5 0.08 145);--hit:32px;--sans:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace}
+html,body{height:100%;margin:0}
+body{background:#e9e2d2;font-family:var(--sans);font-size:14px;line-height:1.5}
+*{box-sizing:border-box}
+a{color:var(--ac-text)}a:hover{color:var(--ac)}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+@keyframes meai-blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+</style>
+</helmet>
+<div style="{{ shellStyle }}" onDragOver="{{ onDragOver }}" onDragLeave="{{ onDragLeave }}" onDrop="{{ onDrop }}">
+
+  <aside data-screen-label="Biblioteca" style="{{ leftStyle }}">
+    <div style="display:flex;align-items:center;gap:10px;padding:16px 16px 12px">
+      <span style="width:18px;height:18px;border-radius:6px;background:var(--ac);display:block"></span>
+      <span style="font-weight:600;font-size:16px;letter-spacing:-.01em">MeAI</span>
+    </div>
+    <div style="padding:0 12px 12px">
+      <button type="button" onClick="{{ openPalette }}" style="width:100%;min-height:var(--hit);display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--muted);font:inherit;font-size:13px;cursor:pointer" style-hover="border-color:var(--faint)">
+        <span>Buscar…</span><span style="font-family:var(--mono);font-size:11px;padding:1px 6px;border:1px solid var(--line);border-radius:5px">Ctrl+K</span>
+      </button>
+    </div>
+    <sc-if value="{{ resizable }}" hint-placeholder-val="{{ true }}">
+      <div role="separator" aria-orientation="vertical" aria-label="Cambiar ancho de la Biblioteca" title="Arrastra para cambiar el ancho · doble clic para restablecer" onPointerDown="{{ startResizeW }}" onDoubleClick="{{ resetW }}" style="position:absolute;top:0;bottom:0;right:-4px;width:8px;z-index:5;cursor:col-resize;display:flex;justify-content:center" style-hover="background:var(--ac-bg)">
+        <span style="width:2px;height:100%;background:{{ wHandleColor }}"></span>
+      </div>
+    </sc-if>
+    <div style="padding:0 12px;display:flex;flex-direction:column;gap:2px;overflow:auto;flex:none;max-height:{{ spacesH }}">
+      <span style="padding:4px 6px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)">Espacios</span>
+      <sc-for list="{{ spaces }}" as="sp" hint-placeholder-count="3">
+        <button type="button" onClick="{{ sp.pick }}" style="{{ sp.style }}">
+          <span style="flex:1;text-align:left">{{ sp.name }}</span>
+          <sc-if value="{{ sp.lock }}" hint-placeholder-val="{{ false }}"><span title="Espacio sensible" style="font-size:11px;padding:0 6px;border:1px solid var(--line);border-radius:5px;color:var(--muted)">sensible</span></sc-if>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--faint)">{{ sp.count }}</span>
+        </button>
+      </sc-for>
+      <button type="button" onClick="{{ newSpace }}" style="min-height:var(--hit);padding:0 10px;border:0;border-radius:8px;background:transparent;color:var(--muted);font:inherit;font-size:13px;text-align:left;cursor:pointer" style-hover="color:var(--text)">+ Nuevo espacio</button>
+    </div>
+    <div role="separator" aria-orientation="horizontal" aria-label="Cambiar alto de la sección de documentos" title="Arrastra para dar más espacio a Documentos, Historial y Línea de tiempo" onPointerDown="{{ startResizeH }}" onDoubleClick="{{ resetH }}" style="flex:none;height:14px;margin-top:4px;cursor:row-resize;display:grid;place-items:center" style-hover="background:var(--ac-bg)">
+      <span style="width:36px;height:4px;border-radius:2px;background:var(--line)"></span>
+    </div>
+    <div style="display:flex;gap:2px;margin:4px 12px 8px;padding:3px;border-radius:9px;background:var(--bg)">
+      <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="3">
+        <button type="button" onClick="{{ tab.pick }}" style="{{ tab.style }}">{{ tab.label }}</button>
+      </sc-for>
+    </div>
+    <div style="flex:1;min-height:0;overflow:auto;padding:0 12px 12px;display:flex;flex-direction:column;gap:8px">
+      <sc-if value="{{ tabDocs }}" hint-placeholder-val="{{ true }}">
+        <label style="display:flex;align-items:center;gap:10px;padding:12px;border:1.5px dashed var(--ac);border-radius:10px;background:var(--ac-bg);cursor:pointer" style-hover="background:var(--raise)">
+          <span style="width:32px;height:32px;flex:none;border-radius:8px;background:var(--ac);color:var(--on-ac);display:grid;place-items:center">
+            <svg width="16" height="16" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m17 8-5-5-5 5"></path><path d="M12 3v12"></path></svg>
+          </span>
+          <span style="min-width:0;display:flex;flex-direction:column">
+            <span style="font-weight:600;font-size:13px;color:var(--ac-text)">Subir documentos</span>
+            <span style="font-size:11.5px;color:var(--muted)">PDF hasta 10 MB · o arrástralos aquí</span>
+          </span>
+          <input type="file" multiple accept="application/pdf,.pdf,.md,.docx,image/*,.txt" onChange="{{ onFiles }}" style="position:absolute;opacity:0;width:1px;height:1px">
+        </label>
+        <sc-if value="{{ libEmpty }}" hint-placeholder-val="{{ false }}"><p style="margin:8px 6px;color:var(--muted);font-size:13px">Aún no hay documentos en este espacio. Arrastra un archivo a cualquier parte de la ventana.</p></sc-if>
+        <sc-for list="{{ docs }}" as="doc" hint-placeholder-count="4">
+          <div style="display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--raise)">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-family:var(--mono);font-size:10px;padding:1px 5px;border-radius:4px;background:var(--bg);color:var(--muted);flex:none">{{ doc.type }}</span>
+              <span style="flex:1;min-width:0;font-family:var(--mono);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ doc.name }}</span>
+              <button type="button" aria-label="Más acciones" onClick="{{ doc.toggleMenu }}" style="width:var(--hit);height:var(--hit);margin:-6px -6px -6px 0;border:0;border-radius:6px;background:transparent;color:var(--muted);font-size:16px;line-height:1;cursor:pointer;flex:none" style-hover="background:var(--bg);color:var(--text)">⋯</button>
+            </div>
+            <sc-if value="{{ doc.hasSummary }}" hint-placeholder-val="{{ true }}"><span style="font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ doc.summary }}</span></sc-if>
+            <sc-if value="{{ doc.isReady }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:5px">
+                <sc-for list="{{ doc.tags }}" as="tg" hint-placeholder-count="2"><span style="font-size:11px;padding:0 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted)">{{ tg }}</span></sc-for>
+                <span style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--faint)">{{ doc.meta }}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{ doc.isProcessing }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="flex:1;display:flex;gap:3px"><sc-for list="{{ doc.stages }}" as="st" hint-placeholder-count="5"><span style="{{ st }}"></span></sc-for></div>
+                <span style="font-family:var(--mono);font-size:11px;color:var(--ac-text)">{{ doc.stageLabel }}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{ doc.isError }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">
+                <span style="font-size:12px;padding:2px 8px;border-radius:6px;background:var(--err-bg);color:var(--err)">{{ doc.error }}</span>
+                <button type="button" onClick="{{ doc.retry }}" style="min-height:var(--hit);padding:0 10px;border:1px solid var(--line);border-radius:7px;background:transparent;color:var(--text);font:inherit;font-size:12px;cursor:pointer" style-hover="background:var(--bg)">Reintentar</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ doc.menuOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;padding:4px;border:1px solid var(--line);border-radius:8px;background:var(--bg)">
+                <button type="button" onClick="{{ doc.view }}" style="min-height:var(--hit);padding:0 8px;border:0;border-radius:6px;background:transparent;color:var(--text);font:inherit;font-size:13px;text-align:left;cursor:pointer" style-hover="background:var(--raise)">Ver</button>
+                <button type="button" onClick="{{ doc.retry }}" style="min-height:var(--hit);padding:0 8px;border:0;border-radius:6px;background:transparent;color:var(--text);font:inherit;font-size:13px;text-align:left;cursor:pointer" style-hover="background:var(--raise)">Reprocesar</button>
+                <button type="button" onClick="{{ doc.move }}" style="min-height:var(--hit);padding:0 8px;border:0;border-radius:6px;background:transparent;color:var(--text);font:inherit;font-size:13px;text-align:left;cursor:pointer" style-hover="background:var(--raise)">{{ doc.moveLabel }}</button>
+                <button type="button" onClick="{{ doc.askDelete }}" style="min-height:var(--hit);padding:0 8px;border:0;border-radius:6px;background:transparent;color:var(--err);font:inherit;font-size:13px;text-align:left;cursor:pointer" style-hover="background:var(--raise)">Eliminar</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ doc.confirming }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:8px;background:var(--bg)">
+                <span style="font-size:12.5px;color:var(--text)">¿Eliminar este documento? Se borran el PDF, sus fragmentos y sus embeddings. No se puede deshacer.</span>
+                <div style="display:flex;gap:6px">
+                  <button type="button" onClick="{{ doc.confirmDelete }}" style="min-height:var(--hit);padding:0 10px;border:1px solid var(--err);border-radius:7px;background:transparent;color:var(--err);font:inherit;font-size:12.5px;cursor:pointer" style-hover="background:var(--err-bg)">Eliminar</button>
+                  <button type="button" onClick="{{ doc.cancelDelete }}" style="min-height:var(--hit);padding:0 10px;border:1px solid var(--line);border-radius:7px;background:transparent;color:var(--text);font:inherit;font-size:12.5px;cursor:pointer" style-hover="background:var(--raise)">Cancelar</button>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </sc-if>
+      <sc-if value="{{ tabHist }}" hint-placeholder-val="{{ false }}">
+        <sc-for list="{{ history }}" as="h" hint-placeholder-count="3">
+          <button type="button" style="display:flex;flex-direction:column;gap:2px;padding:9px 10px;border:0;border-radius:8px;background:transparent;color:var(--text);font:inherit;font-size:13px;text-align:left;cursor:pointer" style-hover="background:var(--raise)">
+            <span>{{ h.title }}</span><span style="font-family:var(--mono);font-size:11px;color:var(--faint)">{{ h.meta }}</span>
+          </button>
+        </sc-for>
+      </sc-if>
+      <sc-if value="{{ tabTime }}" hint-placeholder-val="{{ false }}">
+        <sc-for list="{{ timeline }}" as="g" hint-placeholder-count="3">
+          <div style="display:flex;flex-direction:column;gap:6px;padding:4px 6px 8px">
+            <span style="font-family:var(--mono);font-size:11px;color:var(--faint)">{{ g.date }}</span>
+            <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="2">
+              <div style="display:flex;gap:8px;align-items:baseline;padding-left:10px;border-left:2px solid var(--line)">
+                <span style="font-size:11px;color:var(--muted);flex:none;width:76px">{{ it.kind }}</span>
+                <span style="font-size:13px;min-width:0;overflow-wrap:anywhere">{{ it.label }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </sc-if>
+    </div>
+    <div title="{{ planTip }}" style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)">
+      <span style="{{ planDot }}"></span><span style="font-family:var(--mono)">{{ planLabel }}</span>
+    </div>
+  </aside>
+
+  <main data-screen-label="Conversación" style="flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;background:var(--bg)">
+    <header style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--line)">
+      <button type="button" aria-label="Biblioteca" onClick="{{ toggleLib }}" style="width:var(--hit);height:var(--hit);display:grid;place-items:center;border:0;border-radius:7px;background:transparent;color:var(--muted);cursor:pointer;flex:none" style-hover="background:var(--raise);color:var(--text)">
+        <svg width="17" height="17" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
+      </button>
+      <input aria-label="Título de la conversación" value="{{ title }}" onChange="{{ onTitle }}" style="flex:1 1 160px;min-width:0;min-height:var(--hit);padding:0 6px;border:1px solid transparent;border-radius:7px;background:transparent;color:var(--text);font:inherit;font-size:14px;font-weight:600" style-hover="border-color:var(--line)" style-focus="border-color:var(--ac);outline:none">
+      <span style="font-size:12px;padding:2px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap">{{ spaceChip }}</span>
+      <div role="group" aria-label="Modo" style="display:flex;gap:2px;padding:3px;border-radius:9px;background:var(--panel);border:1px solid var(--line)">
+        <sc-for list="{{ modes }}" as="m" hint-placeholder-count="2">
+          <button type="button" title="{{ m.tip }}" onClick="{{ m.pick }}" style="{{ m.style }}">{{ m.label }}</button>
+        </sc-for>
+      </div>
+      <button type="button" onClick="{{ toggleEv }}" style="min-height:var(--hit);padding:0 10px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--muted);font:inherit;font-size:12.5px;cursor:pointer" style-hover="background:var(--raise);color:var(--text)">Evidencia</button>
+    </header>
+
+    <div style="flex:1;min-height:0;overflow:auto">
+      <div style="max-width:720px;margin:0 auto;padding:28px 20px 20px;display:flex;flex-direction:column;gap:22px">
+
+        <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="Estado vacío" style="display:flex;flex-direction:column;gap:20px;padding-top:24px">
+            <div>
+              <h1 style="margin:0 0 6px;font-size:26px;font-weight:600;letter-spacing:-.02em">¿Qué necesitas recordar?</h1>
+              <p style="margin:0;color:var(--muted);font-size:15px">Respondo solo con lo que dicen tus documentos, y te muestro dónde lo dice.</p>
+            </div>
+            <sc-if value="{{ noDocs }}" hint-placeholder-val="{{ false }}">
+              <label style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:44px 20px;border:1.5px dashed var(--faint);border-radius:12px;text-align:center;cursor:pointer" style-hover="border-color:var(--ac);background:var(--ac-bg)">
+                <span style="font-size:16px;font-weight:600">Arrastra tus documentos aquí</span>
+                <span style="color:var(--muted);font-size:13px">PDF, .md, .docx, imagen o texto pegado. Los PDF, hasta 10 MB y 100 páginas.</span>
+                <span style="margin-top:6px;min-height:var(--hit);display:inline-flex;align-items:center;padding:0 14px;border-radius:8px;background:var(--ac);color:var(--on-ac);font-weight:600;font-size:13px">Elegir archivos</span>
+                <input type="file" multiple onChange="{{ onFiles }}" style="position:absolute;opacity:0;width:1px;height:1px">
+              </label>
+            </sc-if>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <span style="font-size:12px;color:var(--faint)">{{ examplesLabel }}</span>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">
+                <sc-for list="{{ examples }}" as="ex" hint-placeholder-count="4">
+                  <button type="button" onClick="{{ ex.ask }}" style="min-height:56px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--text);font:inherit;font-size:13.5px;text-align:left;cursor:pointer" style-hover="border-color:var(--faint)">{{ ex.text }}</button>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-for list="{{ turns }}" as="turn" hint-placeholder-count="2">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <sc-if value="{{ turn.isUser }}" hint-placeholder-val="{{ false }}">
+              <div style="align-self:flex-end;max-width:85%;padding:9px 14px;border-radius:12px;background:var(--raise);border:1px solid var(--line);font-size:15px">{{ turn.text }}</div>
+            </sc-if>
+
+            <sc-if value="{{ turn.isStage }}" hint-placeholder-val="{{ false }}">
+              <div role="status" style="display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14px"><span>{{ turn.text }}</span><span style="width:7px;height:16px;background:var(--ac);animation:meai-blink 1s steps(1) infinite"></span></div>
+            </sc-if>
+
+            <sc-if value="{{ turn.isAnswer }}" hint-placeholder-val="{{ true }}">
+              <div style="font-size:16px;line-height:1.7;text-wrap:pretty">
+                <sc-for list="{{ turn.segs }}" as="seg" hint-placeholder-count="3"><span>{{ seg.text }}</span><sc-if value="{{ seg.showCite }}" hint-placeholder-val="{{ true }}"><button type="button" title="{{ seg.tip }}" onClick="{{ seg.open }}" style="{{ seg.chipStyle }}">{{ seg.n }}</button></sc-if></sc-for><sc-if value="{{ turn.streaming }}" hint-placeholder-val="{{ false }}"><span style="display:inline-block;width:7px;height:17px;margin-left:2px;vertical-align:-3px;background:var(--ac);animation:meai-blink 1s steps(1) infinite"></span></sc-if>
+              </div>
+              <sc-if value="{{ turn.done }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-left:-8px">
+                  <button type="button" style="min-height:var(--hit);padding:0 8px;border:0;border-radius:6px;background:transparent;color:var(--muted);font:inherit;font-size:12.5px;cursor:pointer" style-hover="background:var(--raise);color:var(--text)">Copiar</button>
+                  <button type="button" onClick="{{ turn.regen }}" style="min-height:var(--hit);padding:0 8px;border:0;border-radius:6px;background:transparent;color:var(--muted);font:inherit;font-size:12.5px;cursor:pointer" style-hover="background:var(--raise);color:var(--text)">Regenerar</button>
+                  <button type="button" style="min-height:var(--hit);padding:0 8px;border:0;border-radius:6px;background:transparent;color:var(--muted);font:inherit;font-size:12.5px;cursor:pointer" style-hover="background:var(--raise);color:var(--text)">Me sirve</button>
+                  <button type="button" style="min-height:var(--hit);padding:0 8px;border:0;border-radius:6px;background:transparent;color:var(--muted);font:inherit;font-size:12.5px;cursor:pointer" style-hover="background:var(--raise);color:var(--text)">No me sirve</button>
+                  <button type="button" onClick="{{ showEv }}" style="min-height:var(--hit);padding:0 8px;border:0;border-radius:6px;background:transparent;color:var(--ac-text);font:inherit;font-size:12.5px;cursor:pointer" style-hover="background:var(--ac-bg)">Ver evidencia</button>
+                </div>
+                <sc-if value="{{ aboutAsk }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-left:1px solid var(--line);border-radius:10px;background:var(--panel)">
+                    <span style="flex:1 1 240px;font-size:13.5px"><span style="color:var(--ac-text);font-weight:600">Sobre mí · </span>¿Guardo que trabajas en backend y automatización?</span>
+                    <button type="button" onClick="{{ aboutSave }}" style="min-height:var(--hit);padding:0 12px;border:0;border-radius:7px;background:var(--ac);color:var(--on-ac);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer">Guardar</button>
+                    <button type="button" onClick="{{ aboutIgnore }}" style="min-height:var(--hit);padding:0 12px;border:1px solid var(--line);border-radius:7px;background:transparent;color:var(--text);font:inherit;font-size:12.5px;cursor:pointer" style-hover="background:var(--raise)">Ignorar</button>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ aboutSaved }}" hint-placeholder-val="{{ false }}"><span style="font-size:12.5px;color:var(--ac-text)">Guardado en Sobre mí.</span></sc-if>
+              </sc-if>
+            </sc-if>
+
+            <sc-if value="{{ turn.isUnknown }}" hint-placeholder-val="{{ false }}">
+              <div data-screen-label="No recuerdo" style="display:flex;flex-direction:column;gap:18px;padding:18px;border:1px solid var(--line);border-radius:12px;background:var(--panel)">
+                <div>
+                  <div style="font-size:16px;font-weight:600">No encontré esto con seguridad en tus documentos.</div>
+                  <div style="margin-top:2px;color:var(--muted);font-size:13.5px">Prefiero decírtelo antes que inventar una respuesta.</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <span style="font-size:12px;font-weight:600;color:var(--muted)">Esto se parece</span>
+                  <sc-for list="{{ near }}" as="nf" hint-placeholder-count="3">
+                    <button type="button" onClick="{{ nf.open }}" style="display:flex;flex-direction:column;gap:4px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--text);font:inherit;text-align:left;cursor:pointer" style-hover="border-color:var(--faint)">
+                      <span style="display:flex;gap:8px;font-family:var(--mono);font-size:11.5px;color:var(--muted)"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ nf.ref }}</span><span style="color:var(--ac-text)">{{ nf.simLabel }}</span></span>
+                      <span style="font-size:13.5px">{{ nf.plain }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <span style="font-size:14px">¿Te refieres al contrato de 2024 o al de 2025?</span>
+                  <div style="display:flex;flex-wrap:wrap;gap:6px">
+                    <sc-for list="{{ clarify }}" as="cl" hint-placeholder-count="2"><button type="button" onClick="{{ cl.pick }}" style="min-height:var(--hit);padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--raise);color:var(--text);font:inherit;font-size:13px;cursor:pointer" style-hover="border-color:var(--ac)">{{ cl.label }}</button></sc-for>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <span style="font-size:12px;font-weight:600;color:var(--muted)">Prueba a preguntarlo así</span>
+                  <div style="display:flex;flex-wrap:wrap;gap:6px">
+                    <sc-for list="{{ rephrase }}" as="rp" hint-placeholder-count="2"><button type="button" onClick="{{ rp.pick }}" style="min-height:var(--hit);padding:4px 12px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--text);font:inherit;font-size:13px;text-align:left;cursor:pointer" style-hover="background:var(--raise)">{{ rp.label }}</button></sc-for>
+                  </div>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:14px">
+                  <button type="button" title="Amplía la búsqueda y agrega coincidencia por palabras exactas" onClick="{{ turn.deepen }}" style="min-height:var(--hit);padding:0 14px;border:0;border-radius:8px;background:var(--ac);color:var(--on-ac);font:inherit;font-size:13px;font-weight:600;cursor:pointer">Buscar más a fondo</button>
+                  <label style="font-size:13px;color:var(--ac-text);text-decoration:underline;text-underline-offset:3px;cursor:pointer">Subir un documento que lo contenga<input type="file" multiple onChange="{{ onFiles }}" style="position:absolute;opacity:0;width:1px;height:1px"></label>
+                </div>
+                <sc-if value="{{ turn.deep }}" hint-placeholder-val="{{ false }}"><span style="font-size:13px;color:var(--muted)">Amplié la búsqueda a todos tus espacios y busqué las palabras exactas. No apareció nada nuevo.</span></sc-if>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ turn.isRecall }}" hint-placeholder-val="{{ false }}">
+              <div data-screen-label="Modo Recordar" style="display:flex;flex-direction:column;gap:8px">
+                <span style="font-size:13px;color:var(--muted)">{{ recallSummary }}</span>
+                <sc-for list="{{ recall }}" as="r" hint-placeholder-count="5">
+                  <button type="button" onClick="{{ r.open }}" style="display:flex;flex-direction:column;gap:4px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--text);font:inherit;text-align:left;cursor:pointer" style-hover="border-color:var(--faint)">
+                    <span style="display:flex;gap:8px;font-family:var(--mono);font-size:11.5px;color:var(--muted)"><span style="color:var(--ac-text)">{{ r.n }}</span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.ref }}</span><span style="color:var(--ac-text)">{{ r.simLabel }}</span></span>
+                    <span style="font-size:13.5px">{{ r.plain }}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="padding:8px 16px 14px">
+      <form onSubmit="{{ submit }}" style="max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          <sc-for list="{{ contextChips }}" as="cc" hint-placeholder-count="2"><span style="font-size:11.5px;padding:1px 9px;border-radius:999px;background:var(--ac-bg);color:var(--ac-text)">{{ cc }}</span></sc-for>
+        </div>
+        <sc-if value="{{ hasNote }}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-size:13px;color:var(--warn)">{{ note }}</span></sc-if>
+        <div style="display:flex;flex-direction:column;gap:4px;padding:10px 10px 8px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel)">
+          <textarea aria-label="Escribe tu pregunta" rows="1" maxlength="1000" placeholder="{{ placeholder }}" value="{{ draft }}" onChange="{{ onDraft }}" onKeyDown="{{ onKey }}" style="width:100%;min-height:26px;max-height:180px;field-sizing:content;resize:none;border:0;outline:none;background:transparent;color:var(--text);font:inherit;font-size:15px;line-height:1.5;padding:2px 0"></textarea>
+          <div style="display:flex;align-items:center;gap:8px">
+            <label title="PDF, .md, .docx, imagen o texto pegado" style="min-height:var(--hit);display:inline-flex;align-items:center;padding:0 10px;border:1px solid var(--line);border-radius:8px;color:var(--muted);font-size:12.5px;cursor:pointer" style-hover="color:var(--text);background:var(--raise)">Adjuntar<input type="file" multiple onChange="{{ onFiles }}" style="position:absolute;opacity:0;width:1px;height:1px"></label>
+            <span style="margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--faint)">{{ counter }}</span>
+            <button type="submit" disabled="{{ busy }}" style="min-height:var(--hit);padding:0 14px;border:0;border-radius:8px;background:var(--ac);color:var(--on-ac);font:inherit;font-size:13px;font-weight:600;cursor:pointer">{{ sendLabel }}</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <sc-if value="{{ scrim }}" hint-placeholder-val="{{ false }}"><div onClick="{{ closeOverlays }}" style="position:absolute;inset:0;z-index:20;background:rgba(60,50,30,.35)"></div></sc-if>
+
+  <aside data-screen-label="Evidencia" style="{{ rightStyle }}">
+    <sc-if value="{{ evList }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;align-items:baseline;gap:8px;padding:16px 16px 10px">
+        <span style="flex:1;font-weight:600;font-size:14px">{{ evTitle }}</span>
+        <span style="font-family:var(--mono);font-size:11.5px;color:var(--muted)">{{ evCount }}</span>
+        <button type="button" aria-label="Cerrar evidencia" onClick="{{ toggleEv }}" style="width:var(--hit);height:var(--hit);margin:-6px -6px -6px 0;border:0;border-radius:6px;background:transparent;color:var(--muted);font-size:16px;cursor:pointer" style-hover="background:var(--raise);color:var(--text)">×</button>
+      </div>
+      <div style="flex:1;min-height:0;overflow:auto;padding:0 12px 14px;display:flex;flex-direction:column;gap:8px">
+        <sc-if value="{{ evEmpty }}" hint-placeholder-val="{{ false }}"><p style="margin:6px 4px;color:var(--muted);font-size:13px">Aquí verás los fragmentos de tus documentos en los que se apoya cada respuesta.</p></sc-if>
+        <sc-for list="{{ evidence }}" as="ev" hint-placeholder-count="3">
+          <div style="{{ ev.cardStyle }}">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="min-width:20px;height:20px;display:grid;place-items:center;border-radius:6px;background:var(--ac-bg);color:var(--ac-text);font-family:var(--mono);font-size:11.5px">{{ ev.n }}</span>
+              <span style="flex:1;min-width:0;font-family:var(--mono);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ ev.ref }}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="flex:1;height:4px;border-radius:2px;background:var(--line);overflow:hidden"><div style="{{ ev.barStyle }}"></div></div>
+              <span style="font-family:var(--mono);font-size:11.5px;color:var(--muted)">{{ ev.simLabel }}</span>
+            </div>
+            <div style="font-size:13.5px;line-height:1.6;color:var(--muted)"><span>{{ ev.pre }}</span><span style="background:var(--ac-bg);color:var(--ac-text);border-radius:3px;padding:1px 2px">{{ ev.hl }}</span><span>{{ ev.post }}</span></div>
+            <button type="button" onClick="{{ ev.open }}" style="align-self:flex-start;min-height:var(--hit);padding:0 10px;border:1px solid var(--line);border-radius:7px;background:transparent;color:var(--text);font:inherit;font-size:12.5px;cursor:pointer" style-hover="background:var(--bg)">Abrir en el documento</button>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{ evViewer }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Visor de PDF" style="display:flex;flex-direction:column;gap:10px;padding:12px 14px 14px;flex:1;min-height:0;overflow:auto">
+        <button type="button" onClick="{{ closeViewer }}" style="align-self:flex-start;min-height:var(--hit);padding:0 10px;border:1px solid var(--line);border-radius:7px;background:transparent;color:var(--text);font:inherit;font-size:12.5px;cursor:pointer" style-hover="background:var(--raise)">← Volver a la evidencia</button>
+        <div style="display:flex;align-items:baseline;gap:8px;font-family:var(--mono);font-size:12px"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ viewer.doc }}</span><span style="color:var(--muted)">{{ viewer.pageLabel }}</span></div>
+        <div style="background:#fbfaf7;color:#22232a;border-radius:6px;padding:26px 24px;display:flex;flex-direction:column;gap:11px;min-height:420px">
+          <span style="height:9px;width:48%;border-radius:4px;background:#d9d8d2"></span>
+          <span style="height:7px;width:100%;border-radius:3px;background:#e7e6e0"></span>
+          <span style="height:7px;width:93%;border-radius:3px;background:#e7e6e0"></span>
+          <span style="height:7px;width:97%;border-radius:3px;background:#e7e6e0"></span>
+          <div style="margin:4px 0;font-family:Georgia,serif;font-size:13.5px;line-height:1.7"><span>{{ viewer.pre }}</span><span style="background:oklch(0.88 0.07 130);padding:2px 1px">{{ viewer.hl }}</span><span>{{ viewer.post }}</span></div>
+          <span style="height:7px;width:95%;border-radius:3px;background:#e7e6e0"></span>
+          <span style="height:7px;width:88%;border-radius:3px;background:#e7e6e0"></span>
+          <span style="height:7px;width:60%;border-radius:3px;background:#e7e6e0"></span>
+          <span style="margin-top:auto;align-self:center;font-family:var(--mono);font-size:10.5px;color:#6b6c75">{{ viewer.footer }}</span>
+        </div>
+      </div>
+    </sc-if>
+  </aside>
+
+  <sc-if value="{{ paletteOpen }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Paleta de comandos" onClick="{{ closeOverlays }}" style="position:absolute;inset:0;z-index:40;background:rgba(60,50,30,.4);display:flex;justify-content:center;align-items:flex-start;padding:12vh 16px 16px">
+      <div onClick="{{ stop }}" style="width:min(560px,100%);max-height:70%;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;background:var(--panel);box-shadow:0 20px 60px rgba(0,0,0,.4);overflow:hidden">
+        <input autofocus aria-label="Buscar comandos" placeholder="Buscar documentos, espacios o acciones…" value="{{ paletteQuery }}" onChange="{{ onPaletteQuery }}" style="min-height:48px;padding:0 16px;border:0;border-bottom:1px solid var(--line);outline:none;background:transparent;color:var(--text);font:inherit;font-size:15px">
+        <div style="overflow:auto;padding:6px;display:flex;flex-direction:column">
+          <sc-for list="{{ commands }}" as="cmd" hint-placeholder-count="6">
+            <button type="button" onClick="{{ cmd.run }}" style="display:flex;align-items:center;gap:10px;min-height:var(--hit);padding:6px 10px;border:0;border-radius:7px;background:transparent;color:var(--text);font:inherit;font-size:13.5px;text-align:left;cursor:pointer" style-hover="background:var(--raise)">
+              <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ cmd.label }}</span><span style="font-family:var(--mono);font-size:11px;color:var(--faint)">{{ cmd.group }}</span>
+            </button>
+          </sc-for>
+          <sc-if value="{{ noCommands }}" hint-placeholder-val="{{ false }}"><span style="padding:10px;color:var(--muted);font-size:13px">Nada coincide con esa búsqueda.</span></sc-if>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ sensitiveOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:45;background:rgba(60,50,30,.4);display:grid;place-items:center;padding:16px">
+      <div role="dialog" style="width:min(420px,100%);display:flex;flex-direction:column;gap:12px;padding:20px;border:1px solid var(--line);border-radius:12px;background:var(--panel)">
+        <span style="font-weight:600;font-size:15px">Este espacio está marcado como sensible</span>
+        <span style="font-size:13.5px;color:var(--muted)">Estás usando el plan gratuito de Gemini. Google puede usar tu pregunta y los fragmentos enviados para mejorar sus productos.</span>
+        <div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px">
+          <button type="button" onClick="{{ sensitiveCancel }}" style="min-height:var(--hit);padding:0 12px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--text);font:inherit;font-size:13px;cursor:pointer">Cancelar</button>
+          <button type="button" onClick="{{ sensitiveSend }}" style="min-height:var(--hit);padding:0 12px;border:0;border-radius:8px;background:var(--ac);color:var(--on-ac);font:inherit;font-size:13px;font-weight:600;cursor:pointer">Enviar de todos modos</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ dragging }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:50;pointer-events:none;background:rgba(40,44,32,.78);display:grid;place-items:center;padding:24px">
+      <div style="padding:40px 48px;border:2px dashed var(--ac);border-radius:16px;color:#fff;font-size:20px;font-weight:600;text-align:center">{{ dropLabel }}</div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;pantalla&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;1 · Conversación&quot;,&quot;2 · No recuerdo&quot;,&quot;3 · Visor de PDF&quot;,&quot;4 · Modo Recordar&quot;,&quot;5 · Estado vacío&quot;,&quot;6 · Biblioteca&quot;,&quot;7 · Paleta de comandos&quot;,&quot;8 · Móvil&quot;],&quot;default&quot;:&quot;1 · Conversación&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Pantalla&quot;},&quot;tema&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Oscuro&quot;,&quot;Claro&quot;],&quot;default&quot;:&quot;Claro&quot;,&quot;tsType&quot;:&quot;'Oscuro'|'Claro'&quot;,&quot;section&quot;:&quot;Apariencia&quot;},&quot;plan&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Gratuito&quot;,&quot;De pago&quot;],&quot;default&quot;:&quot;Gratuito&quot;,&quot;tsType&quot;:&quot;'Gratuito'|'De pago'&quot;,&quot;section&quot;:&quot;Privacidad&quot;}}">
+const STAGES = ['Extrayendo', 'OCR', 'Fragmentando', 'Embeddings', 'Listo'];
+const DOCS = [
+  { id: 'd1', space: 'trabajo', type: 'PDF', name: 'Contrato_2025.pdf', summary: 'Contrato de servicios de backend con Nortek, vigente hasta diciembre de 2025.', tags: ['contrato', 'legal'], date: '14 mar 2025', pages: 9, status: 'ready' },
+  { id: 'd2', space: 'trabajo', type: 'PDF', name: 'Contrato_2024.pdf', summary: 'Contrato anterior con Nortek, con tarifa por hora.', tags: ['contrato'], date: '2 feb 2024', pages: 8, status: 'ready' },
+  { id: 'd3', space: 'trabajo', type: 'OCR', name: 'Recibo_escaneado.pdf', summary: '', tags: [], date: '11 nov 2026', pages: 2, status: 'processing', stage: 1 },
+  { id: 'd4', space: 'trabajo', type: 'NOTA', name: 'Notas_reunion_kickoff.md', summary: 'Acuerdos de la reunión inicial: alcance, fechas y facturación.', tags: ['reunión', 'Nortek'], date: '20 mar 2025', pages: 1, status: 'ready' },
+  { id: 'd5', space: 'trabajo', type: 'PDF', name: 'Factura_marzo.pdf', summary: '', tags: [], date: '12 nov 2026', pages: 1, status: 'error', error: 'Cuota de Gemini agotada' },
+  { id: 'd6', space: 'escuela', type: 'PDF', name: 'Apuntes_biologia_celular.pdf', summary: 'Apuntes sobre orgánulos y metabolismo celular.', tags: ['biología'], date: '3 sep 2026', pages: 46, status: 'ready' },
+  { id: 'd7', space: 'escuela', type: 'IMG', name: 'Guia_examen_historia.jpg', summary: 'Foto de la guía de estudio para el examen.', tags: ['historia'], date: '28 oct 2026', pages: 1, status: 'ready' },
+  { id: 'd8', space: 'personal', type: 'PDF', name: 'Poliza_seguro_hogar.pdf', summary: 'Póliza del seguro de hogar con coberturas y vencimiento.', tags: ['seguro'], date: '5 ene 2026', pages: 12, status: 'ready' },
+  { id: 'd9', space: 'personal', type: 'OCR', name: 'Analisis_sangre_2026.pdf', summary: 'Resultados del análisis de sangre anual.', tags: ['salud'], date: '19 jun 2026', pages: 3, status: 'ready' },
+];
+const SPACES = [{ id: 'trabajo', name: 'Trabajo' }, { id: 'escuela', name: 'Escuela' }, { id: 'personal', name: 'Personal', lock: true }];
+const Q1 = '¿Cuál es el plazo de pago y qué pasa si se retrasan?';
+const Q2 = '¿Cuánto es la penalización por terminar el contrato antes de tiempo?';
+const ANSWER = [
+  { t: 'El contrato de 2025 fija el pago a 30 días desde la fecha de la factura', c: 1 },
+  { t: '. Si el pago se retrasa, se aplica un interés del 1,5 % mensual sobre el saldo pendiente', c: 2 },
+  { t: '. En la reunión inicial se acordó además facturar el último día hábil de cada mes', c: 3 },
+  { t: '.' },
+];
+const EVID = [
+  { n: 1, doc: 'Contrato_2025.pdf', page: 4, sim: 91, pre: 'Las facturas serán pagaderas ', hl: 'en un plazo de treinta (30) días naturales contados desde la fecha de emisión', post: ', mediante transferencia a la cuenta indicada.' },
+  { n: 2, doc: 'Contrato_2025.pdf', page: 5, sim: 87, pre: 'En caso de mora, el Cliente abonará ', hl: 'un interés del 1,5 % mensual sobre el saldo pendiente', post: ' hasta su pago completo.' },
+  { n: 3, doc: 'Notas_reunion_kickoff.md', page: 1, sim: 78, pre: 'Facturación: ', hl: 'se emite el último día hábil de cada mes', post: '; Nortek confirma la recepción por correo.' },
+];
+const RECALL = EVID.concat([
+  { n: 4, doc: 'Contrato_2024.pdf', page: 3, sim: 74, pre: 'El pago se efectuará ', hl: 'a 45 días de la recepción de la factura', post: '.' },
+  { n: 5, doc: 'Contrato_2024.pdf', page: 4, sim: 55, pre: 'Los retrasos en el pago ', hl: 'no devengarán intereses', post: ' durante los primeros quince días.' },
+]);
+const NEAR = [
+  { n: 1, doc: 'Contrato_2025.pdf', page: 7, sim: 62, pre: 'Cualquiera de las partes podrá ', hl: 'resolver el contrato con un preaviso de treinta días', post: ' mediante notificación por escrito.' },
+  { n: 2, doc: 'Contrato_2024.pdf', page: 6, sim: 58, pre: 'La ', hl: 'resolución anticipada', post: ' requerirá notificación por escrito a la otra parte.' },
+  { n: 3, doc: 'Notas_reunion_kickoff.md', page: 1, sim: 41, pre: 'Pendiente: ', hl: 'revisar condiciones de salida', post: ' en la próxima reunión.' },
+];
+const ANSWER_LEN = ANSWER.reduce((a, s) => a + s.t.length, 0);
+
+class Component extends DCLogic {
+  timers = [];
+  constructor(props) { super(props); this.state = this.preset(props.pantalla); }
+  screenKey(p) { return String(p ?? '1')[0]; }
+  layoutFor(key) { const w = key === '8' ? 390 : window.innerWidth; return w < 760 ? 'mobile' : w < 1180 ? 'tablet' : 'desk'; }
+  preset(pantalla) {
+    const k = this.screenKey(pantalla), layout = this.layoutFor(k);
+    const u = (text) => ({ id: 'u' + text.length, role: 'user', text });
+    const turns = k === '2' ? [u(Q2), { id: 'a', kind: 'unknown' }] : k === '4' ? [u('plazo de pago'), { id: 'a', kind: 'recall' }] : k === '5' ? [] : [u(Q1), { id: 'a', kind: 'answer', chars: ANSWER_LEN, done: true }];
+    return { key: k, layout, width: window.innerWidth, turns, docs: k === '5' ? [] : DOCS, spaces: SPACES, space: 'trabajo', tab: 'docs',
+      mode: k === '4' ? 'recordar' : 'preguntar', title: k === '2' ? 'Penalización por terminar el contrato' : k === '4' ? 'Plazo de pago' : k === '5' ? 'Nueva conversación' : 'Condiciones del contrato con Nortek',
+      libOpen: layout !== 'mobile', evOpen: layout === 'desk' || k === '8' || (k === '3' && layout !== 'mobile'),
+      viewer: k === '3' ? EVID[0] : null, activeCite: k === '8' ? 1 : null, paletteOpen: k === '7', paletteQuery: '', menuDoc: null, confirmDoc: k === '6' ? 'd2' : null,
+      draft: '', busy: false, note: null, about: 'ask', sensitive: null, dragging: false };
+  }
+  componentDidMount() {
+    try { const w = +localStorage.getItem('meai-libw'), h = localStorage.getItem('meai-spacesh'); this.setState({ ...(w ? { libWidth: w } : {}), ...(h !== null ? { spacesH: +h } : {}) }); } catch (_) {}
+    this.onResize = () => { const layout = this.layoutFor(this.state.key); this.setState((s) => layout === s.layout ? { width: window.innerWidth } : { width: window.innerWidth, layout, libOpen: layout !== 'mobile', evOpen: layout === 'desk' }); };
+    this.onKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); this.setState((s) => ({ paletteOpen: !s.paletteOpen, paletteQuery: '' })); }
+      else if (e.key === 'Escape') this.closeOverlays();
+    };
+    window.addEventListener('resize', this.onResize); window.addEventListener('keydown', this.onKeyDown);
+  }
+  componentDidUpdate(prev) { if (prev.pantalla !== this.props.pantalla) { this.clearTimers(); this.setState(this.preset(this.props.pantalla)); } }
+  componentWillUnmount() { window.removeEventListener('resize', this.onResize); window.removeEventListener('keydown', this.onKeyDown); this.clearTimers(); }
+  clearTimers() { this.timers.forEach((t) => { clearTimeout(t); clearInterval(t); }); this.timers = []; }
+  closeOverlays = () => this.setState((s) => ({ paletteOpen: false, sensitive: null, menuDoc: null, libOpen: s.layout === 'mobile' ? false : s.libOpen, evOpen: s.layout === 'desk' ? s.evOpen : false }));
+  free() { return (this.props.plan ?? 'Gratuito') === 'Gratuito'; }
+  processDoc(id) {
+    this.setState((s) => ({ menuDoc: null, docs: s.docs.map((d) => d.id === id ? { ...d, status: 'processing', stage: 0, error: null } : d) }));
+    const iv = setInterval(() => {
+      let finished = false;
+      this.setState((s) => ({ docs: s.docs.map((d) => { if (d.id !== id || d.status !== 'processing') return d; if (d.stage >= 3) { finished = true; return { ...d, status: 'ready', stage: 4, summary: d.summary || 'Resumen generado al indexar el documento.' }; } return { ...d, stage: d.stage + 1 }; }) }), () => { if (finished) clearInterval(iv); });
+    }, 1100);
+    this.timers.push(iv);
+  }
+  addFiles(files) {
+    const list = Array.from(files || []); if (!list.length) return;
+    const added = list.map((f, i) => ({ id: 'n' + Date.now() + i, space: this.state.space, name: f.name, summary: '', tags: [], date: '12 nov 2026', pages: 1, status: 'processing', stage: 0,
+      type: /\.pdf$/i.test(f.name) ? 'PDF' : /\.(md|txt|docx)$/i.test(f.name) ? 'NOTA' : 'IMG' }));
+    this.setState((s) => ({ docs: added.concat(s.docs), tab: 'docs', note: null }));
+    added.forEach((d) => this.processDoc(d.id));
+  }
+  ask(raw, confirmed) {
+    const s = this.state; if (s.busy) return;
+    const q = String(raw).trim();
+    if (!q) { this.setState({ note: 'Escribe una pregunta para consultar tus documentos.' }); return; }
+    const ready = s.docs.filter((d) => d.space === s.space && d.status === 'ready');
+    if (!ready.length) { this.setState({ note: 'Todavía no hay documentos listos en este espacio. Sube uno para empezar.', draft: q }); return; }
+    const sp = s.spaces.find((x) => x.id === s.space);
+    if (sp.lock && this.free() && !confirmed) { this.setState({ sensitive: q }); return; }
+    const id = 'a' + Date.now(), recall = s.mode === 'recordar';
+    const hit = s.space === 'trabajo' && /pago|plazo|retras|factur/i.test(q);
+    const stage = { id, kind: 'stage', text: (recall ? 'Buscando fragmentos en ' : 'Buscando en ') + ready.length + ' documentos…' };
+    this.setState((st) => ({ turns: st.turns.concat([{ id: 'u' + id, role: 'user', text: q }, stage]), draft: '', busy: true, note: null, sensitive: null, viewer: null, activeCite: null, about: 'hidden' }));
+    const swap = (turn, extra) => this.setState((st) => ({ turns: st.turns.map((t) => t.id === id ? turn : t), ...extra }));
+    this.timers.push(setTimeout(() => {
+      if (recall) { swap({ id, kind: hit ? 'recall' : 'unknown' }, { busy: false }); return; }
+      if (!hit) { swap({ id, kind: 'unknown' }, { busy: false }); return; }
+      let n = 0;
+      const iv = setInterval(() => { n += 4; if (n >= ANSWER_LEN) { clearInterval(iv); swap({ id, kind: 'answer', chars: ANSWER_LEN, done: true }, { busy: false }); } else swap({ id, kind: 'answer', chars: n }); }, 28);
+      this.timers.push(iv);
+    }, recall ? 350 : 1000));
+  }
+  renderVals() {
+    const s = this.state, p = this.props, dark = (p.tema ?? 'Claro') === 'Oscuro';
+    const mobile = s.layout === 'mobile', desk = s.layout === 'desk', framed = s.key === '8' && s.width > 520;
+    const space = s.spaces.find((x) => x.id === s.space) || s.spaces[0];
+    const lastA = [...s.turns].reverse().find((t) => t.kind && t.kind !== 'stage');
+    const focus = lastA ? lastA.kind : 'none';
+    const openFrag = (f) => () => this.setState({ viewer: f, evOpen: true });
+    const frag = (f) => ({ ...f, ref: f.doc + ' · p. ' + f.page, simLabel: f.sim + '%', plain: f.pre + f.hl + f.post, open: openFrag(f) });
+    const list = focus === 'answer' ? EVID : focus === 'unknown' ? NEAR : focus === 'recall' ? RECALL : [];
+    const seg = (on) => ({ flex: 1, minHeight: 'var(--hit)', padding: '0 10px', border: 0, borderRadius: 6, cursor: 'pointer', font: 'inherit', fontSize: 12.5, whiteSpace: 'nowrap',
+      background: on ? 'var(--raise)' : 'transparent', color: on ? 'var(--text)' : 'var(--muted)', fontWeight: on ? 600 : 400 });
+    const theme = dark ? { '--bg': '#1d1f19', '--panel': '#23261f', '--raise': '#2c3027', '--line': 'rgba(235,225,200,.1)', '--text': '#ece6d6', '--muted': '#b3ad9c', '--faint': '#9a9584', '--ac': 'oklch(0.74 0.08 140)', '--on-ac': '#1d1f19', '--ac-bg': 'oklch(0.74 0.08 140 / .16)', '--ac-text': 'oklch(0.84 0.07 140)', '--err': 'oklch(0.74 0.11 40)', '--err-bg': 'oklch(0.74 0.11 40 / .14)', '--warn': 'oklch(0.82 0.1 80)', '--ok': 'oklch(0.78 0.08 145)' } : {};
+    const cmds = [
+      { label: 'Nueva conversación', group: 'Acción', run: () => this.setState({ turns: [], title: 'Nueva conversación', viewer: null, paletteOpen: false }) },
+      { label: 'Nueva nota rápida', group: 'Acción', run: () => { this.setState({ paletteOpen: false }); this.addFiles([{ name: 'Nota_rapida.md' }]); } },
+      { label: s.mode === 'preguntar' ? 'Cambiar a modo Recordar' : 'Cambiar a modo Preguntar', group: 'Acción', run: () => this.setState({ mode: s.mode === 'preguntar' ? 'recordar' : 'preguntar', paletteOpen: false }) },
+    ].concat(s.spaces.map((x) => ({ label: 'Ir a ' + x.name, group: 'Espacio', run: () => this.setState({ space: x.id, paletteOpen: false }) })))
+      .concat(s.docs.map((d) => ({ label: d.name, group: 'Documento', run: () => this.setState({ space: d.space, tab: 'docs', paletteOpen: false, evOpen: true, viewer: { doc: d.name, page: 1, pre: d.summary || 'Documento sin resumen todavía.', hl: '', post: '' } }) })));
+    const pq = s.paletteQuery.trim().toLowerCase(), commands = cmds.filter((c) => !pq || c.label.toLowerCase().includes(pq));
+    const docs = s.docs.filter((d) => d.space === s.space);
+    const v = s.viewer;
+    return {
+      shellStyle: { position: 'relative', display: 'flex', overflow: 'hidden', background: 'var(--bg)', color: 'var(--text)', '--hit': mobile ? '44px' : '32px', ...theme,
+        ...(framed ? { width: 390, height: 800, margin: '20px auto', borderRadius: 36, border: '8px solid #3a3a2e' } : { height: '100vh' }) },
+      resizable: !mobile, wHandleColor: s.resizingW ? 'var(--ac)' : 'transparent',
+      spacesH: (s.spacesH ?? 400) + 'px',
+      startResizeW: (e) => {
+        e.preventDefault(); const x0 = e.clientX, w0 = s.libWidth ?? 280;
+        const mv = (ev) => this.setState({ libWidth: Math.max(220, Math.min(640, w0 + ev.clientX - x0)) });
+        const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); this.setState({ resizingW: false }); try { localStorage.setItem('meai-libw', String(this.state.libWidth)); } catch (_) {} };
+        this.setState({ resizingW: true }); window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
+      },
+      resetW: () => { this.setState({ libWidth: 280 }); try { localStorage.setItem('meai-libw', '280'); } catch (_) {} },
+      startResizeH: (e) => {
+        e.preventDefault(); const y0 = e.clientY, h0 = Math.min(s.spacesH ?? 400, e.currentTarget.previousElementSibling ? e.currentTarget.previousElementSibling.offsetHeight : 200);
+        const mv = (ev) => this.setState({ spacesH: Math.max(0, Math.min(500, h0 + ev.clientY - y0)) });
+        const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); try { localStorage.setItem('meai-spacesh', String(this.state.spacesH)); } catch (_) {} };
+        window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
+      },
+      resetH: () => { this.setState({ spacesH: 400 }); try { localStorage.removeItem('meai-spacesh'); } catch (_) {} },
+      leftStyle: { width: mobile ? 280 : (s.libWidth ?? 280), position: 'relative', flex: 'none', minHeight: 0, flexDirection: 'column', background: 'var(--panel)', borderRight: '1px solid var(--line)', display: s.libOpen ? 'flex' : 'none',
+        ...(mobile ? { position: 'absolute', top: 0, bottom: 0, left: 0, width: '86%', maxWidth: 320, zIndex: 30 } : {}) },
+      rightStyle: { width: 360, flex: 'none', minHeight: 0, flexDirection: 'column', background: 'var(--panel)', borderLeft: '1px solid var(--line)', display: s.evOpen ? 'flex' : 'none',
+        ...(mobile ? { position: 'absolute', left: 0, right: 0, bottom: 0, width: 'auto', height: '72%', zIndex: 30, borderLeft: 0, borderTop: '1px solid var(--line)', borderRadius: '16px 16px 0 0' }
+          : !desk ? { position: 'absolute', top: 0, bottom: 0, right: 0, maxWidth: '90%', zIndex: 30 } : {}) },
+      scrim: (mobile && s.libOpen) || (!desk && s.evOpen),
+      onDragOver: (e) => { e.preventDefault(); if (!s.dragging) this.setState({ dragging: true }); },
+      onDragLeave: (e) => { if (!e.relatedTarget) this.setState({ dragging: false }); },
+      onDrop: (e) => { e.preventDefault(); this.setState({ dragging: false }); this.addFiles(e.dataTransfer.files); },
+      dragging: s.dragging, dropLabel: 'Suelta para agregar a ' + space.name,
+      openPalette: () => this.setState({ paletteOpen: true, paletteQuery: '' }),
+      spaces: s.spaces.map((x) => ({ name: x.name, lock: !!x.lock, count: s.docs.filter((d) => d.space === x.id).length, pick: () => this.setState({ space: x.id, menuDoc: null, confirmDoc: null, note: null }),
+        style: { display: 'flex', alignItems: 'center', gap: 8, minHeight: 'var(--hit)', padding: '0 10px', border: 0, borderRadius: 8, cursor: 'pointer', font: 'inherit', fontSize: 13.5,
+          background: x.id === s.space ? 'var(--ac-bg)' : 'transparent', color: x.id === s.space ? 'var(--ac-text)' : 'var(--text)', fontWeight: x.id === s.space ? 600 : 400 } })),
+      newSpace: () => this.setState((st) => { const id = 'e' + st.spaces.length; return { spaces: st.spaces.concat([{ id, name: 'Nuevo espacio' }]), space: id }; }),
+      tabs: [['docs', 'Documentos'], ['hist', 'Historial'], ['time', 'Línea de tiempo']].map(([id, label]) => ({ label, pick: () => this.setState({ tab: id }), style: seg(s.tab === id) })),
+      tabDocs: s.tab === 'docs', tabHist: s.tab === 'hist', tabTime: s.tab === 'time', libEmpty: docs.length === 0,
+      docs: docs.map((d) => {
+        const next = s.spaces[(s.spaces.findIndex((x) => x.id === d.space) + 1) % s.spaces.length];
+        return { ...d, hasSummary: !!d.summary, isReady: d.status === 'ready', isProcessing: d.status === 'processing', isError: d.status === 'error',
+          meta: d.date + ' · ' + d.pages + ' pág.', stageLabel: STAGES[d.stage || 0] + ' · ' + ((d.stage || 0) + 1) + '/5',
+          stages: STAGES.map((_, i) => ({ flex: 1, height: 4, borderRadius: 2, background: i <= (d.stage || 0) ? 'var(--ac)' : 'var(--line)' })),
+          menuOpen: s.menuDoc === d.id && s.confirmDoc !== d.id, confirming: s.confirmDoc === d.id, moveLabel: 'Mover a ' + next.name,
+          toggleMenu: () => this.setState({ menuDoc: s.menuDoc === d.id ? null : d.id, confirmDoc: null }),
+          view: () => this.setState({ menuDoc: null, evOpen: true, libOpen: mobile ? false : s.libOpen, viewer: { doc: d.name, page: 1, pre: d.summary || 'Documento sin resumen todavía.', hl: '', post: '' } }),
+          retry: () => this.processDoc(d.id),
+          move: () => this.setState((st) => ({ menuDoc: null, docs: st.docs.map((x) => x.id === d.id ? { ...x, space: next.id } : x) })),
+          askDelete: () => this.setState({ confirmDoc: d.id, menuDoc: null }), cancelDelete: () => this.setState({ confirmDoc: null }),
+          confirmDelete: () => this.setState((st) => ({ confirmDoc: null, docs: st.docs.filter((x) => x.id !== d.id) })) };
+      }),
+      history: [{ title: 'Condiciones del contrato con Nortek', meta: 'Hoy · Trabajo' }, { title: 'Fechas de entrega del proyecto', meta: 'Ayer · Trabajo' }, { title: 'Orgánulos para el examen', meta: '3 nov · Escuela' }],
+      timeline: [
+        { date: 'Hoy · 12 nov 2026', items: [{ kind: 'Conversación', label: 'Condiciones del contrato con Nortek' }, { kind: 'Documento', label: 'Factura_marzo.pdf' }] },
+        { date: 'Ayer · 11 nov 2026', items: [{ kind: 'Conversación', label: 'Fechas de entrega del proyecto' }, { kind: 'Documento', label: 'Recibo_escaneado.pdf' }] },
+        { date: '20 mar 2025', items: [{ kind: 'Documento', label: 'Notas_reunion_kickoff.md' }] },
+        { date: '14 mar 2025', items: [{ kind: 'Documento', label: 'Contrato_2025.pdf' }] },
+      ],
+      planLabel: this.free() ? 'Gemini · plan gratuito' : 'Gemini · plan de pago',
+      planTip: this.free() ? 'En el plan gratuito, Google puede usar el texto enviado (fragmentos y preguntas) para mejorar sus productos. Todo lo demás se queda en tu equipo.' : 'En el plan de pago, Google no usa tus datos para entrenar modelos. Todo lo demás se queda en tu equipo.',
+      planDot: { width: 8, height: 8, borderRadius: '50%', flex: 'none', background: this.free() ? 'var(--warn)' : 'var(--ok)' },
+      toggleLib: () => this.setState({ libOpen: !s.libOpen }), toggleEv: () => this.setState({ evOpen: !s.evOpen }), showEv: () => this.setState({ evOpen: true, viewer: null }),
+      title: s.title, onTitle: (e) => this.setState({ title: e.target.value }), spaceChip: space.name,
+      modes: [['preguntar', 'Preguntar', 'La IA genera una respuesta con citas'], ['recordar', 'Recordar', 'Sin IA generativa: solo los fragmentos más relevantes. Más rápido y no gasta tokens']].map(([id, label, tip]) => ({ label, tip, pick: () => this.setState({ mode: id }), style: seg(s.mode === id) })),
+      isEmpty: s.turns.length === 0, noDocs: s.docs.length === 0,
+      examplesLabel: s.docs.length === 0 ? 'Cuando subas documentos podrás preguntar cosas como' : 'Prueba con',
+      examples: ['¿Cuál es el plazo de pago del contrato?', '¿Qué acordamos sobre la facturación en la reunión inicial?', '¿Cuándo vence el contrato con Nortek?', '¿Cuánto preaviso hay que dar para terminar el contrato?'].map((text) => ({ text, ask: () => this.ask(text) })),
+      onFiles: (e) => { this.addFiles(e.target.files); e.target.value = ''; },
+      turns: s.turns.map((t) => {
+        let left = t.chars || 0;
+        return { ...t, isUser: t.role === 'user', isStage: t.kind === 'stage', isAnswer: t.kind === 'answer', isUnknown: t.kind === 'unknown', isRecall: t.kind === 'recall', streaming: t.kind === 'answer' && !t.done,
+          segs: t.kind === 'answer' ? ANSWER.map((a) => { const text = a.t.slice(0, Math.max(0, left)); left -= a.t.length; const e = a.c && EVID[a.c - 1];
+            return { text, n: a.c, showCite: !!a.c && left >= 0, tip: e ? e.doc + ' · p. ' + e.page : '', open: () => this.setState({ activeCite: a.c, evOpen: true, viewer: null }),
+              chipStyle: { display: 'inline-grid', placeItems: 'center', minWidth: 20, height: 20, margin: '0 1px 0 4px', padding: '0 5px', verticalAlign: 2, border: 0, borderRadius: 6, cursor: 'pointer', fontFamily: 'var(--mono)', fontSize: 11.5,
+                background: s.activeCite === a.c ? 'var(--ac)' : 'var(--ac-bg)', color: s.activeCite === a.c ? 'var(--on-ac)' : 'var(--ac-text)' } }; }) : [],
+          regen: () => { const i = s.turns.indexOf(t), q = s.turns[i - 1]; this.setState({ turns: s.turns.slice(0, i - 1) }, () => this.ask(q ? q.text : Q1)); },
+          deepen: () => this.setState((st) => ({ turns: st.turns.map((x) => x.id === t.id ? { ...x, deep: true } : x) })) };
+      }),
+      aboutAsk: s.about === 'ask', aboutSaved: s.about === 'saved', aboutSave: () => this.setState({ about: 'saved' }), aboutIgnore: () => this.setState({ about: 'hidden' }),
+      near: NEAR.map(frag), recall: RECALL.map(frag), recallSummary: 'Modo Recordar, sin IA generativa. ' + RECALL.length + ' fragmentos en 3 documentos, ordenados por similitud.',
+      clarify: ['Contrato de 2024', 'Contrato de 2025'].map((label) => ({ label, pick: () => this.setState({ draft: '¿Qué dice el ' + label.toLowerCase() + ' sobre terminarlo antes de tiempo?' }) })),
+      rephrase: ['¿Qué dice el contrato sobre la resolución anticipada?', '¿Cuánto preaviso hay que dar para terminar el contrato?'].map((label) => ({ label, pick: () => this.setState({ draft: label }) })),
+      contextChips: ['Espacio: ' + space.name, 'Sobre mí: activo'], hasNote: !!s.note, note: s.note,
+      placeholder: s.mode === 'recordar' ? 'Busca en tu memoria…' : 'Pregunta a tu memoria…', draft: s.draft, counter: s.draft.length + '/1000',
+      onDraft: (e) => this.setState({ draft: e.target.value, note: null }),
+      onKey: (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.ask(s.draft); } },
+      submit: (e) => { e.preventDefault(); this.ask(s.draft); }, busy: s.busy, sendLabel: s.mode === 'recordar' ? 'Recordar' : 'Enviar',
+      closeOverlays: this.closeOverlays, stop: (e) => e.stopPropagation(),
+      evList: !v, evViewer: !!v, evEmpty: list.length === 0,
+      evTitle: focus === 'unknown' ? 'Fragmentos cercanos' : focus === 'recall' ? 'Resultados' : 'Evidencia de esta respuesta',
+      evCount: list.length ? list.length + ' fragmentos' : '',
+      evidence: list.map((f) => { const on = focus === 'answer' && s.activeCite === f.n; return { ...frag(f),
+        cardStyle: { display: 'flex', flexDirection: 'column', gap: 8, padding: 12, borderRadius: 10, background: 'var(--raise)', border: '1px solid ' + (on ? 'var(--ac)' : 'var(--line)') },
+        barStyle: { width: f.sim + '%', height: '100%', background: 'var(--ac)' } }; }),
+      closeViewer: () => this.setState({ viewer: null }),
+      viewer: v ? { doc: v.doc, pageLabel: 'p. ' + v.page, pre: v.pre, hl: v.hl, post: v.post, footer: 'vista simulada de la página ' + v.page } : {},
+      paletteOpen: s.paletteOpen, paletteQuery: s.paletteQuery, onPaletteQuery: (e) => this.setState({ paletteQuery: e.target.value }), commands, noCommands: commands.length === 0,
+      sensitiveOpen: !!s.sensitive, sensitiveCancel: () => this.setState({ sensitive: null, draft: s.sensitive || '' }), sensitiveSend: () => this.ask(s.sensitive, true),
+    };
+  }
+}
+</script>
+</body>
+</html>

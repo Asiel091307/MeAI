@@ -8,11 +8,21 @@ import ts from 'typescript';
 const SERVER_ONLY = [/-handler$/, /\/src\/db\/(?!contracts$)/, /^pg$/, /\/src\/documents\//];
 
 async function clientFiles(): Promise<string[]> {
-  const components = (await readdir(new URL('../../components/', import.meta.url)))
-    .filter((name) => name.endsWith('.tsx'))
+  // Every .ts/.tsx under components/, including subfolders (library/, conversation/, evidence/, hooks/).
+  const entries = await readdir(new URL('../../components/', import.meta.url), { recursive: true });
+  const components = entries
+    .map((name) => String(name).replaceAll('\\', '/'))
+    .filter((name) => /\.tsx?$/.test(name))
     .map((name) => `components/${name}`);
   return ['app/page.tsx', ...components];
 }
+
+test('the guard scans the nested component folders too', async () => {
+  const files = await clientFiles();
+  expect(files).toContain('components/app-shell.tsx');
+  expect(files).toContain('components/conversation/message-item.tsx');
+  expect(files).toContain('components/hooks/use-chat.ts');
+});
 
 function valueImports(source: string): string[] {
   const file = ts.createSourceFile('client.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);

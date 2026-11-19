@@ -13,11 +13,18 @@ Objetivo: que comprobar una respuesta tome un clic.
 - **Conversación** (centro): preguntas y respuestas, con las fuentes numeradas `[1]`, `[2]`… debajo de cada respuesta.
 - **Evidencia** (derecha): una tarjeta por fuente de la respuesta seleccionada, con documento, página, similitud y fragmento, y el PDF abierto en la página citada.
 
-## Decisiones tomadas (2026-11-13)
+## Decisiones tomadas
 
-- **Citas `[n]` = fuentes numeradas.** Se numeran las fuentes que ya acompañan a cada respuesta. **No** se añaden marcadores dentro del texto. RF-4.2 de la spec 001 (cita por respuesta) no cambia, y tampoco el prompt ni el parser de `gemini-generation.ts`.
-- **Visor = `<iframe>` con `#page=N`.** Se usa el visor de PDF integrado del navegador. El resaltado del fragmento con `pdfjs-dist` queda para la spec **004b**.
-- **Sin dependencias nuevas.** Layout con CSS Grid y estilos propios (un CSS en `app/`). Sin librerías de componentes ni de estilos.
+2026-11-13:
+- **Citas `[n]` = fuentes numeradas, por respuesta.** RF-4.2 de la spec 001 (cita por respuesta) no cambia, y tampoco el prompt ni el parser de `gemini-generation.ts`.
+- **Visor = `<iframe>` con `#page=N`.** El resaltado del fragmento dentro del PDF con `pdfjs-dist` queda para la spec **004b**.
+
+2026-11-18 (diseño de alta fidelidad en `design_handoff_meai_interfaz/`):
+- **El diseño manda en lo visual:** colores, tipografía, medidas, radios y textos son los del handoff. Esta spec se actualizó para coincidir con él.
+- **Chips de cita al final de la respuesta.** Tienen el aspecto de los chips del diseño, pero van juntos al final del texto, no frase a frase. Así se respeta la cita por respuesta.
+- **Lo que no tiene backend todavía se oculta hasta su spec:** Espacios y modo sensible (008), Historial y Línea de tiempo (005), modo Recordar (007), "No recuerdo" con fragmentos cercanos, aclaración y reformulaciones (006), etapas, resumen y etiquetas (009), "Sobre mí" (010), además de Regenerar, valoraciones, título editable, notas rápidas y preguntas de ejemplo. Nada se simula.
+- **Fuentes IBM Plex Sans y Mono con `next/font/google`.** Viene incluido en Next (sin dependencias nuevas), se descarga al construir y la app la sirve; el navegador no contacta con Google.
+- **Íconos de Lucide copiados como SVG en línea** (licencia ISC), sin instalar `lucide-react`.
 
 ## Usuarios
 
@@ -27,24 +34,28 @@ El mismo de la spec 001: un usuario individual, en local (`127.0.0.1`), sin cuen
 
 ### RF-004-1. Disposición en tres paneles
 
-La pantalla principal deberá mostrar Biblioteca, Conversación y Evidencia como tres regiones identificables.
+La pantalla principal deberá mostrar Biblioteca, Conversación y Evidencia.
 
 Criterios de aceptación EARS:
 
-- Cuando el usuario abra MeAI, el sistema deberá mostrar tres regiones con nombre accesible "Biblioteca", "Conversación" y "Evidencia", en ese orden de izquierda a derecha.
-- Mientras el ancho de la ventana sea menor de 1024 px, el sistema deberá apilar las regiones en vertical (Biblioteca, Conversación, Evidencia) sin desplazamiento horizontal.
-- El sistema deberá conservar todo el comportamiento de la spec 001 que hoy está en la pantalla única: subir, listar con estados, reprocesar, eliminar con confirmación, chat con streaming, bloqueo de segunda pregunta, memoria solo en la pestaña y citas no disponibles tras eliminar.
+- Cuando el usuario abra MeAI, el sistema deberá mostrar tres regiones con nombre accesible "Biblioteca", "Conversación" y "Evidencia".
+- Mientras la ventana mida 1180 px o más, el sistema deberá mostrar las tres en fila: Biblioteca (280 px por defecto), Conversación (el resto) y Evidencia (360 px, abierta).
+- Mientras mida entre 760 y 1179 px, el sistema deberá mostrar la Evidencia como un cajón a la derecha (360 px, máx. 90 %) con fondo oscurecido, cerrado hasta que se abra.
+- Mientras mida menos de 760 px, el sistema deberá mostrar una columna: la Biblioteca como cajón izquierdo (86 %, máx. 320 px) que abre el botón "Biblioteca", y la Evidencia como hoja inferior (72 % de alto). El objetivo táctil subirá de 32 a 44 px.
+- Cuando el usuario arrastre el borde derecho de la Biblioteca, el sistema deberá cambiar su ancho entre 220 y 640 px y guardarlo en `localStorage['meai-libw']`; con doble clic volverá a 280 px. No existe en móvil.
+- Cuando el usuario pulse el botón "Biblioteca" o "Evidencia" (o el × de la Evidencia), el sistema deberá mostrar u ocultar ese panel. Al cambiar de tamaño de ventana se restablece su estado por defecto.
+- El sistema deberá conservar todo el comportamiento de la spec 001: subir, listar con estados, reprocesar, eliminar con confirmación, chat con streaming, bloqueo de segunda pregunta, memoria solo en la pestaña y citas no disponibles tras eliminar.
 
-### RF-004-2. Fuentes numeradas en la conversación
+### RF-004-2. Chips de cita al final de la respuesta
 
-Cada respuesta con fuentes deberá mostrarlas numeradas y seleccionables.
+Cada respuesta con fuentes deberá mostrarlas como chips numerados y seleccionables.
 
 Criterios de aceptación EARS:
 
-- Cuando una respuesta termine con fuentes, el sistema deberá mostrarlas debajo de la respuesta como botones `[1]`, `[2]`… en el orden recibido, cada uno con el nombre del documento y la página.
-- Cuando el usuario pulse una fuente `[n]`, el sistema deberá seleccionar esa respuesta y la tarjeta `n` en el panel de Evidencia.
-- Cuando termine una respuesta nueva con fuentes, el sistema deberá seleccionarla y mostrar sus tarjetas, con la `[1]` seleccionada.
-- Si la respuesta no tiene fuentes (falta de evidencia, error o cancelación), el sistema no deberá mostrar números de fuente para ella.
+- Cuando una respuesta termine con fuentes, el sistema deberá mostrar al final del texto un chip por fuente, numerado `1`, `2`… en el orden recibido, con el tooltip "{documento} · p. {n}" y el nombre accesible "Fuente {n}: {documento}, página {p}".
+- Cuando el usuario pulse un chip, el sistema deberá abrir la Evidencia, seleccionar esa respuesta y resaltar la tarjeta del chip; el chip activo se mostrará con fondo de acento.
+- Cuando termine una respuesta nueva con fuentes, el sistema deberá seleccionarla y mostrar sus tarjetas.
+- Si la respuesta no tiene fuentes (falta de evidencia, error o cancelación), el sistema no deberá mostrar chips para ella.
 
 ### RF-004-3. Panel de evidencia
 
@@ -52,21 +63,20 @@ El panel de Evidencia deberá mostrar las fuentes de la respuesta seleccionada.
 
 Criterios de aceptación EARS:
 
-- Mientras haya una respuesta seleccionada, el sistema deberá mostrar una tarjeta por fuente, con: número `[n]`, nombre del documento, página, similitud y el texto del fragmento.
-- El sistema deberá mostrar la similitud como el `score` de la búsqueda (similitud coseno) con dos decimales y coma decimal, por ejemplo "Similitud: 0,87".
-- Cuando el usuario seleccione una tarjeta, el sistema deberá marcarla como seleccionada de forma accesible (`aria-current` o `aria-selected`) y mostrar su PDF en el visor.
-- Mientras no haya ninguna respuesta con fuentes, el sistema deberá mostrar el texto "Aquí verás las fuentes de cada respuesta." en lugar de tarjetas.
-- Si el documento de una fuente fue eliminado, el sistema deberá mostrar su tarjeta como "Fuente no disponible (documento eliminado)", con el fragmento recibido en su momento y sin visor.
+- Mientras haya una respuesta seleccionada con fuentes, el sistema deberá mostrar el encabezado "Evidencia de esta respuesta", el total ("3 fragmentos") y una tarjeta por fuente con: número, "{documento} · p. {n}", una barra de similitud con su porcentaje (`score` × 100, redondeado, por ejemplo "87%"), el texto del fragmento y el botón "Abrir en el documento".
+- La tarjeta resaltada (por un chip) llevará borde de acento y `aria-current="true"`.
+- Mientras no haya ninguna respuesta con fuentes, el sistema deberá mostrar "Aquí verás los fragmentos de tus documentos en los que se apoya cada respuesta.".
+- Si el documento de una fuente fue eliminado, su tarjeta mostrará "Fuente no disponible (documento eliminado)", con el fragmento recibido en su momento y sin el botón "Abrir en el documento".
 
 ### RF-004-4. Visor del PDF en la página citada
 
-El sistema deberá mostrar el PDF original abierto en la página de la fuente seleccionada.
+El sistema deberá mostrar el PDF original abierto en la página de la fuente.
 
 Criterios de aceptación EARS:
 
-- Cuando se seleccione una fuente disponible, el sistema deberá mostrar un `<iframe>` con título "Documento {nombre}, página {n}" y origen `/api/documents/{documentId}/file#page={page}`.
-- Cuando cambie la fuente seleccionada, el sistema deberá actualizar el visor a su documento y su página.
-- Si el navegador no puede mostrar PDF dentro de la página, el sistema deberá ofrecer el enlace "Abrir el PDF en una pestaña nueva" a la misma dirección.
+- Cuando el usuario pulse "Abrir en el documento", el sistema deberá sustituir la lista de evidencia por el visor: botón "← Volver a la evidencia", la línea "{documento} · p. {n}" y un `<iframe>` con título "Documento {nombre}, página {n}" y origen `/api/documents/{documentId}/file#page={page}`, sobre el fondo de página del diseño.
+- Cuando el usuario elija "Ver" en el menú de un documento, el sistema deberá abrir el visor en la página 1.
+- El visor ofrecerá también el enlace "Abrir el PDF en una pestaña nueva" a la misma dirección.
 
 ### RF-004-5. Descarga del PDF original
 
@@ -88,11 +98,48 @@ Criterios de aceptación EARS:
 - Cuando el servidor resuelva las citas de una respuesta, cada `ResolvedCitation` del evento `final` deberá incluir `score`: el mismo valor que devolvió `searchSimilar` para ese fragmento.
 - El sistema no deberá alterar el orden ni el filtrado de las citas: solo se citan fuentes realmente recuperadas (RF-4.2).
 
+### RF-004-7. Biblioteca
+
+Criterios de aceptación EARS:
+
+- El sistema deberá mostrar el logo "MeAI", el botón "Buscar…" con el atajo "Ctrl+K" (abre la paleta), el botón "Subir documentos" ("PDF hasta 10 MB · o arrástralos aquí") con selección múltiple, la lista de documentos y el pie "Gemini · plan gratuito" con el tooltip de privacidad del diseño (spec 002).
+- Cada documento se mostrará como tarjeta: chip "PDF", nombre en mono con elipsis, fecha de alta ("14 mar 2025") y botón "Más acciones" (⋯) con Ver, Reprocesar y Eliminar. Su estado será accesible como texto ("Disponible", "En procesamiento", "Fallido").
+- Mientras un documento esté en procesamiento, su tarjeta mostrará la barra de progreso y "Procesando…" (las etapas detalladas llegan con la spec 009).
+- Si un documento tiene error, su tarjeta mostrará el error en un chip terracota y el botón "Reintentar" (reprocesa). Un documento disponible con error (reprocesamiento fallido, RF-9.4) mostrará también el chip.
+- Cuando el usuario elija Eliminar, el sistema deberá pedir confirmación en línea: "¿Eliminar este documento? Se borran el PDF, sus fragmentos y sus embeddings. No se puede deshacer.", con los botones Eliminar y Cancelar.
+- Cuando el usuario suba varios archivos, el sistema deberá enviarlos uno a uno a `POST /api/documents` y mostrar el motivo de cada rechazo con el nombre del archivo.
+
+### RF-004-8. Conversación
+
+Criterios de aceptación EARS:
+
+- El encabezado mostrará el botón "Biblioteca", el título (la primera pregunta, o "Nueva conversación") y el botón "Evidencia".
+- Mientras no haya mensajes, el sistema deberá mostrar "¿Qué necesitas recordar?" y "Respondo solo con lo que dicen tus documentos, y te muestro dónde lo dice."; si no hay documentos, además la zona "Arrastra tus documentos aquí" con el botón "Elegir archivos".
+- La pregunta del usuario aparecerá en burbuja a la derecha; mientras se busca o genera, el estado ("Buscando evidencia…") y el texto provisional llevarán el cursor parpadeante del diseño.
+- Una respuesta terminada mostrará las acciones "Copiar" y "Ver evidencia".
+- Cuando la respuesta indique falta de evidencia (RF-4.3), el sistema deberá mostrar la tarjeta "No encontré esto con seguridad en tus documentos." / "Prefiero decírtelo antes que inventar una respuesta.", con el enlace "Subir un documento que lo contenga". Sin citas (las sugerencias llegan con la spec 006).
+- La barra de entrada tendrá un área de texto autoajustable (máx. 1000 caracteres), el contador "0/1000", "Adjuntar" (sube archivos) y el botón "Enviar". Enter envía y Shift+Enter hace salto de línea.
+- Si el campo está vacío, el sistema deberá mostrar "Escribe una pregunta para consultar tus documentos." sin consultar al servidor; si no hay documentos disponibles, "Todavía no hay documentos listos. Sube uno para empezar."
+
+### RF-004-9. Paleta de comandos
+
+Criterios de aceptación EARS:
+
+- Cuando el usuario pulse Ctrl+K (o ⌘+K) o el botón "Buscar…", el sistema deberá abrir la paleta "Buscar documentos, espacios o acciones…"; Ctrl+K de nuevo o Esc la cierran.
+- La paleta ofrecerá "Nueva conversación" (grupo Acción) y cada documento (grupo Documento, abre el visor), filtrados por el texto escrito; si nada coincide, "Nada coincide con esa búsqueda.".
+
+### RF-004-10. Arrastrar y soltar
+
+Criterios de aceptación EARS:
+
+- Mientras el usuario arrastre archivos sobre la ventana, el sistema deberá mostrar el aviso "Suelta para agregar a tus documentos".
+- Cuando los suelte, el sistema deberá subirlos como en RF-004-7.
+
 ## Requisitos no funcionales
 
-- RNF-004-1. Sin dependencias nuevas: CSS Grid y estilos propios; el visor usa el del navegador.
+- RNF-004-1. Sin dependencias nuevas: estilos propios en `app/globals.css` con los tokens del diseño (tema claro por defecto y oscuro con `prefers-color-scheme`), IBM Plex con `next/font/google`, íconos SVG en línea; el visor usa el del navegador.
 - RNF-004-2. Todo el texto visible y los mensajes de error estarán en español (RNF-1).
-- RNF-004-3. Accesibilidad básica: regiones con nombre, fuentes `[n]` como botones con nombre accesible ("Fuente 1: {documento}, página {n}"), foco visible y orden de tabulación Biblioteca → Conversación → Evidencia.
+- RNF-004-3. Accesibilidad básica: regiones con nombre, chips como botones con nombre accesible ("Fuente 1: {documento}, página {n}"), foco visible (`outline 2px` de acento) y estados de documento legibles por lectores de pantalla.
 - RNF-004-4. Ningún componente del cliente importará código de servidor; lo vigila `tests/unit/client-imports.test.ts`.
 - RNF-004-5. `chat-panel.tsx` (248 líneas) se dividirá en componentes pequeños, de no más de unas 120 líneas cada uno: formulario de pregunta, lista de mensajes, mensaje y fuentes numeradas. La lógica de streaming se separa de la presentación.
 - RNF-004-6. Privacidad (RNF-7): el PDF solo se sirve a petición del usuario y la aplicación sigue escuchando solo en `127.0.0.1`.

@@ -25,29 +25,29 @@ Columna **Carril**: **I** = integrador (archivos compartidos), **A** = datos y c
 
 ## 4. Partir la conversación (carril B)
 
-- [ ] T004-06. **B.** Separar la lógica de streaming de `chat-panel.tsx` en un hook (`components/chat/use-chat-answers.ts`) sin cambiar su comportamiento. **RNF-004-5.**
+- [x] T004-06. **B.** Separar la lógica de streaming de `chat-panel.tsx` en un hook (`components/chat/use-chat-answers.ts`) sin cambiar su comportamiento. **RNF-004-5.**
   Hecho cuando: todos los `ui/chat-*` y `ui/home-page-wiring` actuales siguen en verde sin cambiar sus aserciones.
-- [ ] T004-07. **B.** Dividir la presentación en `components/chat/question-form.tsx`, `message-list.tsx` y `message-item.tsx`, de no más de unas 120 líneas cada uno. **RNF-004-5.**
+- [x] T004-07. **B.** Dividir la presentación en `components/chat/question-form.tsx`, `message-list.tsx` y `message-item.tsx`, de no más de unas 120 líneas cada uno. **RNF-004-5.**
   Hecho cuando: los mismos tests siguen en verde y `u/client-imports.test.ts` pasa.
-- [ ] T004-08. **B.** Fuentes numeradas: botones `[1]`, `[2]`… con nombre accesible "Fuente n: {documento}, página {p}" (`components/chat/numbered-sources.tsx`); sin números si no hay fuentes. **RF-004-2.**
+- [x] T004-08. **B.** Fuentes numeradas: botones `[1]`, `[2]`… con nombre accesible "Fuente n: {documento}, página {p}" (`components/chat/numbered-sources.tsx`); sin números si no hay fuentes. **RF-004-2.**
   Hecho cuando: `ui/evidence-selection.test.tsx` comprueba los botones y su nombre accesible; una respuesta sin evidencia no muestra números.
 
 ## 5. Panel de evidencia (carril B)
 
-- [ ] T004-09. **B.** `components/evidence/evidence-card.tsx`: número, documento, página, "Similitud: 0,87" (dos decimales, coma decimal) y fragmento; variante "Fuente no disponible (documento eliminado)". **RF-004-3.**
+- [x] T004-09. **B.** `components/evidence/evidence-card.tsx`: número, documento, página, "Similitud: 0,87" (dos decimales, coma decimal) y fragmento; variante "Fuente no disponible (documento eliminado)". **RF-004-3.**
   Hecho cuando: los tests de interfaz verifican el formato de la similitud y la variante no disponible.
-- [ ] T004-10. **B.** `components/evidence/pdf-viewer.tsx`: `<iframe>` con título "Documento {nombre}, página {n}" y `src` `/api/documents/{id}/file#page={n}`, más el enlace "Abrir el PDF en una pestaña nueva". **RF-004-4.**
+- [x] T004-10. **B.** `components/evidence/pdf-viewer.tsx`: `<iframe>` con título "Documento {nombre}, página {n}" y `src` `/api/documents/{id}/file#page={n}`, más el enlace "Abrir el PDF en una pestaña nueva". **RF-004-4.**
   Hecho cuando: un test de interfaz comprueba el título, el `src` y el enlace.
-- [ ] T004-11. **B.** `components/evidence/evidence-panel.tsx`: tarjetas de la respuesta seleccionada, tarjeta seleccionada marcada (`aria-current`), visor solo para fuentes disponibles y estado vacío "Aquí verás las fuentes de cada respuesta.". **RF-004-3, RF-004-4.**
+- [x] T004-11. **B.** `components/evidence/evidence-panel.tsx`: tarjetas de la respuesta seleccionada, tarjeta seleccionada marcada (`aria-current`), visor solo para fuentes disponibles y estado vacío "Aquí verás las fuentes de cada respuesta.". **RF-004-3, RF-004-4.**
   Hecho cuando: `ui/evidence-deleted-source.test.tsx` y el estado vacío pasan.
 
 ## 6. Composición en tres paneles (carril B)
 
-- [ ] T004-12. **B.** `app/page.tsx`: tres regiones con nombre accesible (Biblioteca, Conversación y Evidencia) y el estado de selección (respuesta y fuente) elevado a la página; una respuesta nueva con fuentes selecciona la `[1]`; pulsar `[n]` selecciona su tarjeta. Mover el panel de documentos a `components/library/`. **RF-004-1, RF-004-2.**
+- [x] T004-12. **B.** `app/page.tsx`: tres regiones con nombre accesible (Biblioteca, Conversación y Evidencia) y el estado de selección (respuesta y fuente) elevado a la página; una respuesta nueva con fuentes selecciona la `[1]`; pulsar `[n]` selecciona su tarjeta. Mover el panel de documentos a `components/library/`. **RF-004-1, RF-004-2.**
   Hecho cuando: `ui/three-panel-layout.test.tsx` y `ui/evidence-selection.test.tsx` (pulsar `[2]` cambia la tarjeta y el `src` del iframe) pasan.
-- [ ] T004-13. **B.** `app/globals.css` (nuevo, importado en `app/layout.tsx`): CSS Grid de tres columnas, apilado en vertical bajo 1024 px, foco visible. Sin librerías. **RF-004-1, RNF-004-1, RNF-004-3.**
+- [x] T004-13. **B.** `app/globals.css` (nuevo, importado en `app/layout.tsx`): CSS Grid de tres columnas, apilado en vertical bajo 1024 px, foco visible. Sin librerías. **RF-004-1, RNF-004-1, RNF-004-3.**
   Hecho cuando: un test comprueba que la página importa el CSS y que las regiones llevan las clases del grid; la revisión manual a 1280 px y a 800 px no muestra desplazamiento horizontal.
-- [ ] T004-14. **B.** Eliminar un documento en Biblioteca marca su tarjeta de Evidencia como no disponible y quita el visor. **RF-004-3.**
+- [x] T004-14. **B.** Eliminar un documento en Biblioteca marca su tarjeta de Evidencia como no disponible y quita el visor. **RF-004-3.**
   Hecho cuando: `ui/home-page-wiring.test.tsx` ampliado lo verifica.
 
 ## 7. Cierre (integrador)
