@@ -345,6 +345,14 @@ textarea {
   background: var(--warn);
 }
 
+.plan-dot[data-tone='ok'] {
+  background: var(--ok);
+}
+
+.plan-dot[data-tone='error'] {
+  background: var(--err);
+}
+
 /* Document card */
 .doc-card {
   display: flex;

@@ -88,9 +88,27 @@ test('a saved library width is restored', () => {
   expect(screen.getByRole('complementary', { name: 'Biblioteca' }).style.width).toBe('350px');
 });
 
-test('the footer shows the free Gemini plan with its privacy note', () => {
+test('the footer shows the configured provider with its privacy note (spec 012)', async () => {
   setWindowWidth(1280);
   render(<AppShell fetchFn={mockApi().fetchFn} />);
-  const footer = screen.getByText('Gemini · plan gratuito').parentElement;
+  const footer = (await screen.findByText('Gemini · gemini-3.5-flash-lite')).parentElement;
   expect(footer?.getAttribute('title')).toContain('Google puede usar el texto enviado');
+  expect(footer?.querySelector('.plan-dot')?.getAttribute('data-tone')).toBe('warn');
+});
+
+test('missing variables and documents indexed with another model are announced (spec 012)', async () => {
+  setWindowWidth(1280);
+  const settings = {
+    embedding: { provider: 'openai-compatible', model: 'nomic-embed-text', dimensions: 768, privacy: 'local' },
+    generation: { provider: 'openai-compatible', model: 'gpt-4o-mini', privacy: 'external' },
+    missing: ['OPENAI_API_KEY'],
+    documentsWithOtherModel: 3,
+  };
+  render(<AppShell fetchFn={mockApi({ settings }).fetchFn} />);
+  expect(await screen.findByText('Falta configurar OPENAI_API_KEY en .env.')).toBeTruthy();
+  expect(
+    screen.getByText('3 documentos se indexaron con otro modelo de embeddings. Reprocésalos para poder consultarlos.'),
+  ).toBeTruthy();
+  const footer = screen.getByText('Compatible OpenAI · gpt-4o-mini').parentElement;
+  expect(footer?.querySelector('.plan-dot')?.getAttribute('data-tone')).toBe('error');
 });

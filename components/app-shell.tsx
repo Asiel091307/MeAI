@@ -10,6 +10,8 @@ import { EvidencePanel } from './evidence/evidence-panel';
 import type { ViewerTarget } from './evidence/pdf-viewer';
 import { useChat } from './hooks/use-chat';
 import { useDocuments } from './hooks/use-documents';
+import { useSettings } from './hooks/use-settings';
+import { describeProviderStatus } from './library/provider-status';
 import { LibraryPanel } from './library/library-panel';
 
 export type Layout = 'desk' | 'tablet' | 'mobile';
@@ -63,6 +65,8 @@ export function AppShell({ fetchFn, initialDocuments, pollIntervalMs }: AppShell
     }
   }, []);
   const chat = useChat({ fetchFn, deletedDocumentIds, onAnswer });
+  const libraryKey = docs.documents.map((doc) => `${doc.id}:${doc.status}:${doc.activeVersionId}`).join('|');
+  const settings = useSettings(fetchFn, libraryKey);
 
   // Layout follows the window width; on every breakpoint change the panels reset (RF-004-1).
   useEffect(() => {
@@ -224,6 +228,7 @@ export function AppShell({ fetchFn, initialDocuments, pollIntervalMs }: AppShell
           actionError={docs.actionError}
           uploadErrors={docs.uploadErrors}
           isUploading={docs.isUploading}
+          providerStatus={settings ? describeProviderStatus(settings) : null}
           onUpload={upload}
           onOpenPalette={() => setPaletteOpen(true)}
           onView={(doc) => openViewer({ documentId: doc.id, name: doc.name, page: 1 })}

@@ -4,9 +4,7 @@ import React, { useRef } from 'react';
 import type { PublicDocumentItem } from '../../app/api/documents/public-document';
 import { UploadIcon } from '../icons';
 import { DocumentCard } from './document-card';
-
-export const PLAN_TOOLTIP =
-  'En el plan gratuito, Google puede usar el texto enviado (fragmentos y preguntas) para mejorar sus productos. Todo lo demás se queda en tu equipo.';
+import type { ProviderStatus } from './provider-status';
 
 export interface LibraryPanelProps {
   documents: readonly PublicDocumentItem[];
@@ -16,6 +14,8 @@ export interface LibraryPanelProps {
   actionError: string | null;
   uploadErrors: readonly string[];
   isUploading: boolean;
+  // null until GET /api/settings answers (spec 012).
+  providerStatus: ProviderStatus | null;
   onUpload: (files: FileList) => void;
   onOpenPalette: () => void;
   onView: (document: PublicDocumentItem) => void;
@@ -90,6 +90,11 @@ export function LibraryPanel(props: LibraryPanelProps) {
             {message}
           </p>
         ))}
+        {props.providerStatus?.notices.map((message) => (
+          <p key={message} className="library-note" role="status">
+            {message}
+          </p>
+        ))}
         {props.actionError ? (
           <p className="library-note" role="alert">
             {props.actionError}
@@ -113,10 +118,12 @@ export function LibraryPanel(props: LibraryPanelProps) {
         )}
       </div>
 
-      <div className="library-footer" title={PLAN_TOOLTIP}>
-        <span className="plan-dot" aria-hidden="true" />
-        <span className="mono">Gemini · plan gratuito</span>
-      </div>
+      {props.providerStatus ? (
+        <div className="library-footer" title={props.providerStatus.tooltip}>
+          <span className="plan-dot" data-tone={props.providerStatus.tone} aria-hidden="true" />
+          <span className="mono">{props.providerStatus.label}</span>
+        </div>
+      ) : null}
     </aside>
   );
 }

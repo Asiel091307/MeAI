@@ -6,7 +6,15 @@ export interface MockApiOptions {
   documents?: PublicDocumentItem[];
   chatEvents?: unknown[];
   uploadResult?: (file: File) => { status: number; body: unknown };
+  settings?: unknown;
 }
+
+export const geminiFreeSettings = {
+  embedding: { provider: 'gemini', model: 'gemini-embedding-001', dimensions: 1536, privacy: 'free' },
+  generation: { provider: 'gemini', model: 'gemini-3.5-flash-lite', privacy: 'free' },
+  missing: [],
+  documentsWithOtherModel: 0,
+};
 
 export function documentItem(overrides: Partial<PublicDocumentItem> = {}): PublicDocumentItem {
   return {
@@ -51,6 +59,9 @@ export function mockApi(options: MockApiOptions = {}) {
     }
     if (/\/reprocess$/.test(url) && method === 'POST') {
       return Response.json({ document: { status: 'processing' } }, { status: 202 });
+    }
+    if (url === '/api/settings') {
+      return Response.json(options.settings ?? geminiFreeSettings);
     }
     if (url === '/api/chat/answers') {
       return new Response(sse(options.chatEvents ?? []), {
