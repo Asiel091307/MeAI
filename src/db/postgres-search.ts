@@ -5,6 +5,8 @@ import type { ChunkSearchRepository, RetrievedChunk } from '../rag/retrieval/con
 // RAG beginners think in "similarity" (higher = closer), so score = 1 - distance.
 // Only the active version of an 'available' document is searched, so documents that are
 // processing or failed, and old versions, never reach an answer (RF-3, RF-9).
+// Vectors from different models are not comparable (and may differ in size), so only versions
+// embedded with the current model and the query's size are searched (RF-012-4).
 const SEARCH_SQL = `
   SELECT c.id AS chunk_id,
          c.document_id,
@@ -15,6 +17,10 @@ const SEARCH_SQL = `
   JOIN documents d
     ON d.active_version_id = c.version_id
    AND d.status = 'available'
+  JOIN document_versions v
+    ON v.id = c.version_id
+   AND v.embedding_model = $3
+   AND v.embedding_dimensions = vector_dims($1::vector)
   ORDER BY c.embedding <=> $1::vector
   LIMIT $2`;
 
@@ -26,7 +32,14 @@ interface SearchRow {
   score: number | string;
 }
 
-export function createPostgresSearchRepository(pool: Pool): ChunkSearchRepository {
+export interface SearchModelOptions {
+  embeddingModel: string;
+}
+
+export function createPostgresSearchRepository(
+  pool: Pool,
+  { embeddingModel }: SearchModelOptions,
+): ChunkSearchRepository {
   return {
     async searchSimilar(queryVector, topK) {
       if (!Number.isInteger(topK) || topK <= 0) {
@@ -35,6 +48,7 @@ export function createPostgresSearchRepository(pool: Pool): ChunkSearchRepositor
       const result = await pool.query<SearchRow>(SEARCH_SQL, [
         `[${queryVector.join(',')}]`,
         topK,
+        embeddingModel,
       ]);
       return result.rows.map(
         (row): RetrievedChunk => ({

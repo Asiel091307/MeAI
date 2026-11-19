@@ -15,6 +15,7 @@ const migrations = [
   '002_create_document_versions.sql',
   '003_create_chunks.sql',
   '004_add_chunk_embeddings.sql',
+  '005_flexible_embeddings.sql',
 ];
 const DIMENSIONS = 1536;
 
@@ -69,7 +70,7 @@ async function seedVersion(pool) {
     name: 'notas.pdf',
     pdfBytes: Uint8Array.from([1, 2, 3]),
   });
-  const version = await createPostgresVersionRepository(pool).create(document.id);
+  const version = await createPostgresVersionRepository(pool).create(document.id, 'test-model');
   return { document, version };
 }
 
@@ -80,6 +81,22 @@ test('creating a version returns a processing version of the document', async ()
     assert.equal(version.status, 'processing');
     assert.match(version.id, /^[0-9a-f-]{36}$/);
     assert.ok(version.createdAt instanceof Date);
+  });
+}, 180_000);
+
+test('saving records the vector size on the version and accepts any size', async () => {
+  await withDatabase(async (pool) => {
+    const { document, version } = await seedVersion(pool);
+    assert.equal(version.embeddingModel, 'test-model');
+    assert.equal(version.embeddingDimensions, null);
+    await createPostgresChunkRepository(pool).save(document.id, version.id, [
+      { page: 1, position: 1, text: 'pequeno', embedding: embeddingFor(1, 768) },
+    ]);
+    const { rows } = await pool.query(
+      'SELECT embedding_model, embedding_dimensions FROM document_versions WHERE id = $1',
+      [version.id],
+    );
+    assert.deepEqual(rows, [{ embedding_model: 'test-model', embedding_dimensions: 768 }]);
   });
 }, 180_000);
 
@@ -134,7 +151,7 @@ test('a failing save rolls back every chunk of the batch', async () => {
         { page: 1, position: 1, text: 'valido', embedding: embeddingFor(1) },
         { page: 1, position: 2, text: 'dimension incorrecta', embedding: embeddingFor(2, 10) },
       ]),
-      /expected 1536 dimensions/,
+      /same number of dimensions/,
     );
 
     assert.deepEqual(await repository.findByVersion(version.id), []);

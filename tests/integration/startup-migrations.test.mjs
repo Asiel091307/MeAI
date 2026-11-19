@@ -29,7 +29,7 @@ test('startup applies pending migrations once, then recovers interrupted documen
     const embedding = await env.pool.query(
       "SELECT format_type(atttypid, atttypmod) AS type FROM pg_attribute WHERE attrelid = 'public.chunks'::regclass AND attname = 'embedding'",
     );
-    assert.equal(embedding.rows[0].type, 'vector(1536)');
+    assert.equal(embedding.rows[0].type, 'vector');
 
     // Running again changes nothing.
     assert.deepEqual(await runMigrations(env.pool), []);

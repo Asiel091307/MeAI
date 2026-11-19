@@ -4,6 +4,7 @@ import { createPostgresDocumentRepository } from '../db/postgres-documents';
 import { createPostgresPublicationRepository } from '../db/postgres-publication';
 import { createPostgresVersionRepository } from '../db/postgres-versions';
 import { loadRagConfig } from '../rag/config';
+import { loadAiConfig } from '../rag/providers/ai-config';
 import { loadGeminiEmbeddingProvider } from '../rag/providers/gemini-embeddings';
 import { processDocument } from './process-document';
 
@@ -16,6 +17,7 @@ async function processWithDefaultDependencies(documentId: string): Promise<void>
     chunks: createPostgresChunkRepository(pool),
     publication: createPostgresPublicationRepository(pool),
     embeddings: loadGeminiEmbeddingProvider(),
+    embeddingModel: loadAiConfig().embedding.model,
     config: loadRagConfig(),
   });
 }

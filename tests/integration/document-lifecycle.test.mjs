@@ -70,6 +70,7 @@ async function startDatabase() {
   for (const file of [
     '001_create_documents.sql', '002_create_document_versions.sql',
     '003_create_chunks.sql', '004_add_chunk_embeddings.sql',
+    '005_flexible_embeddings.sql',
   ]) {
     await pool.query(await readFile(new URL(`../../db/migrations/${file}`, import.meta.url), 'utf8'));
   }
@@ -87,9 +88,10 @@ test('upload, process, search, reprocess and delete a document end to end', asyn
       publication: createPostgresPublicationRepository(pool),
       reprocessing: createPostgresReprocessingRepository(pool),
       embeddings,
+      embeddingModel: 'test-model',
       config: DEFAULT_RAG_CONFIG,
     };
-    const search = { documents, embeddings, search: createPostgresSearchRepository(pool), topK: 2 };
+    const search = { documents, embeddings, search: createPostgresSearchRepository(pool, { embeddingModel: 'test-model' }), topK: 2 };
 
     // 1. Upload and process: the document becomes available.
     const registered = await registerDocument(documents, {

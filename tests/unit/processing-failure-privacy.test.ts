@@ -22,11 +22,13 @@ function setup(pdfBytes: Uint8Array, overrides: Partial<ProcessDocumentDeps> = {
   const deps: ProcessDocumentDeps = {
     documents: { findById: async () => document },
     versions: {
-      create: async (documentId) => ({
+      create: async (documentId, embeddingModel) => ({
         id: 'version-1',
         documentId,
         status: 'processing',
         createdAt: new Date('2026-01-01T00:00:00Z'),
+        embeddingModel,
+        embeddingDimensions: null,
       }),
     },
     chunks: { save: async () => {} },
@@ -37,6 +39,7 @@ function setup(pdfBytes: Uint8Array, overrides: Partial<ProcessDocumentDeps> = {
       },
     },
     embeddings: { embedDocuments: async (texts) => texts.map(() => [1, 0]) },
+    embeddingModel: 'test-model',
     config: DEFAULT_RAG_CONFIG,
     ...overrides,
   };

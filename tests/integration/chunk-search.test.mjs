@@ -14,6 +14,7 @@ const migrations = [
   '002_create_document_versions.sql',
   '003_create_chunks.sql',
   '004_add_chunk_embeddings.sql',
+  '005_flexible_embeddings.sql',
 ];
 
 async function withDatabase(run) {
@@ -82,7 +83,8 @@ async function insertDocument(pool, name, status) {
 
 async function insertVersion(pool, documentId, status, chunks) {
   const { rows } = await pool.query(
-    'INSERT INTO document_versions (document_id, status) VALUES ($1, $2) RETURNING id',
+    `INSERT INTO document_versions (document_id, status, embedding_model, embedding_dimensions)
+     VALUES ($1, $2, 'test-model', ${DIMENSIONS}) RETURNING id`,
     [documentId, status],
   );
   const versionId = rows[0].id;
@@ -126,7 +128,7 @@ test('searches only active versions of available documents, best first', async (
     const failed = await insertDocument(pool, 'fallido.pdf', 'failed');
     await insertVersion(pool, failed, 'failed', [{ page: 1, text: 'fallido', angle: 0 }]);
 
-    const search = createPostgresSearchRepository(pool);
+    const search = createPostgresSearchRepository(pool, { embeddingModel: 'test-model' });
     const results = await search.searchSimilar(queryVector, 10);
 
     assert.deepEqual(results.map((r) => r.text), ['cercano', 'medio', 'lejano']);

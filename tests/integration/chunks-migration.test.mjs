@@ -6,12 +6,12 @@ import { test } from 'vitest';
 
 const exec = promisify(execFile);
 
-test('chunks keep their document, version, page and position, with a 1536-dimension embedding', async () => {
+test('chunks keep their document, version, page and position, with an embedding of any dimension', async () => {
   const database = `meai_chunks_${randomUUID().replaceAll('-', '').slice(0, 16)}`;
   const documentId = randomUUID();
   const otherDocumentId = randomUUID();
   const versionId = randomUUID();
-  // T26 made the embedding mandatory; any valid 1536-dimension vector works here.
+  // T26 made the embedding mandatory; any valid vector works here.
   const embedding = 'array_fill(0.1::real, ARRAY[1536])::vector';
   const nextVersionId = randomUUID();
   const env = {
@@ -74,7 +74,7 @@ test('chunks keep their document, version, page and position, with a 1536-dimens
     const embeddingType = await compose('exec', '-T', 'db', 'psql', '-U', 'meai', '-d', database,
       '-v', 'ON_ERROR_STOP=1', '-At', '-c',
       "SELECT format_type(atttypid, atttypmod) || ' ' || attnotnull FROM pg_attribute WHERE attrelid = 'public.chunks'::regclass AND attname = 'embedding'");
-    assert.equal(embeddingType.trim(), 'vector(1536) true');
+    assert.equal(embeddingType.trim(), 'vector true');
   } finally {
     await compose('exec', '-T', 'db', 'psql', '-U', 'meai', '-d', 'postgres',
       '-v', 'ON_ERROR_STOP=1', '-c', `DROP DATABASE ${database} WITH (FORCE)`);

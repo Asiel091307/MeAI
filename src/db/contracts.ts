@@ -20,6 +20,10 @@ export interface DocumentVersion {
   documentId: string;
   status: VersionStatus;
   createdAt: Date;
+  // Model and vector size the chunks were embedded with. The size is null until the first save;
+  // search only uses versions that match the current model.
+  embeddingModel: string | null;
+  embeddingDimensions: number | null;
 }
 
 export interface Chunk {
@@ -43,11 +47,12 @@ export interface DocumentRepository {
 
 export interface DocumentVersionRepository {
   // Starts a processing attempt: a new version with status 'processing', not active yet.
-  create(documentId: string): Promise<DocumentVersion>;
+  create(documentId: string, embeddingModel: string): Promise<DocumentVersion>;
 }
 
 export interface ChunkRepository {
   // Saves the chunks of a version that is not published yet: nobody can query them until publish.
+  // Also records the vector size on the version; all vectors of one save must have the same length.
   save(documentId: string, versionId: string, chunks: readonly NewChunk[]): Promise<void>;
   findByVersion(versionId: string): Promise<Chunk[]>;
 }
