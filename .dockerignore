@@ -1,7 +1,13 @@
 .git
+.github
 .next
+.next*
+.cache
 node_modules
 *.tsbuildinfo
 .env*
 docs
 tests
+design_handoff_meai_interfaz
+.agents
+.claude
