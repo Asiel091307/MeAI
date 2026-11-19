@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { readFile } from 'node:fs/promises';
 import { test } from 'vitest';
 
@@ -8,15 +9,19 @@ const packageJson = JSON.parse(
 );
 
 for (const script of ['lint', 'typecheck']) {
-  test(`pnpm ${script} checks the project successfully`, () => {
+  // Asynchronous on purpose: a synchronous spawn blocks the Vitest worker for the whole tsc run,
+  // and the runner then reports a "Timeout calling onTaskUpdate" error even though tests pass.
+  test(`pnpm ${script} checks the project successfully`, async () => {
     const command = process.platform === 'win32' ? 'cmd.exe' : 'pnpm';
     const args = process.platform === 'win32'
       ? ['/d', '/s', '/c', `pnpm ${script}`]
       : [script];
-    const result = spawnSync(command, args, { encoding: 'utf8', timeout: 120_000 });
-
-    assert.equal(result.status, 0, result.stderr || result.stdout || result.error?.message);
-  }, 60_000);
+    try {
+      await promisify(execFile)(command, args, { encoding: 'utf8', timeout: 120_000 });
+    } catch (error) {
+      assert.fail(error.stderr || error.stdout || error.message);
+    }
+  }, 150_000);
 }
 
 test('the test script runs the Vitest unit suite', () => {
