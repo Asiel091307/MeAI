@@ -1,11 +1,11 @@
 import {
   handleDefaultDeleteDocument,
-  type RouteContextWithId,
+  type NextRouteContextWithId,
 } from './delete-document-handler';
 
 export async function DELETE(
   request: Request,
-  context: RouteContextWithId,
+  context: NextRouteContextWithId,
 ): Promise<Response> {
   return handleDefaultDeleteDocument(request, context);
 }

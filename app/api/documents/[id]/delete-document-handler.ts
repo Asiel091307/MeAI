@@ -12,6 +12,11 @@ export interface RouteContextWithId {
   params: Promise<{ id: string }> | { id: string };
 }
 
+// What Next.js 15 passes to a dynamic route at build time: params is always a promise.
+export interface NextRouteContextWithId {
+  params: Promise<{ id: string }>;
+}
+
 let testRepositoryOverride: Pick<DocumentRepository, 'delete'> | null = null;
 
 export function setDocumentDeleteRepositoryForTesting(

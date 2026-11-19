@@ -22,8 +22,7 @@ import { validateQuestion } from '../../../../src/rag/answering/question-validat
 import { loadAiConfig } from '../../../../src/rag/providers/ai-config';
 import { loadRagConfig } from '../../../../src/rag/config';
 import type { EmbeddingProvider } from '../../../../src/rag/providers/embeddings';
-import { createGeminiAnswerGenerator } from '../../../../src/rag/providers/gemini-generation';
-import { loadGeminiEmbeddingProvider } from '../../../../src/rag/providers/gemini-embeddings';
+import { createAnswerGenerator, createEmbeddingProvider } from '../../../../src/rag/providers/factory';
 import type { AnswerGenerator } from '../../../../src/rag/providers/generation';
 import type { ChunkSearchRepository } from '../../../../src/rag/retrieval/contracts';
 import { searchQuestion } from '../../../../src/rag/retrieval/search-question';
@@ -187,13 +186,12 @@ function getDefaultChatAnswersDeps(): ChatAnswersHandlerDeps {
   }
   const pool = getPool();
   const config = loadRagConfig();
+  const ai = loadAiConfig();
   return {
     documents: createPostgresDocumentRepository(pool),
-    embeddings: loadGeminiEmbeddingProvider(),
-    search: createPostgresSearchRepository(pool, {
-      embeddingModel: loadAiConfig().embedding.model,
-    }),
-    generator: createGeminiAnswerGenerator(),
+    embeddings: createEmbeddingProvider(ai),
+    search: createPostgresSearchRepository(pool, { embeddingModel: ai.embedding.model }),
+    generator: createAnswerGenerator(ai),
     topK: config.retrievalTopK,
     guard: defaultGuard,
     coordinator: defaultDependentQueryCoordinator,

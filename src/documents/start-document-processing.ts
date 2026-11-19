@@ -5,19 +5,20 @@ import { createPostgresPublicationRepository } from '../db/postgres-publication'
 import { createPostgresVersionRepository } from '../db/postgres-versions';
 import { loadRagConfig } from '../rag/config';
 import { loadAiConfig } from '../rag/providers/ai-config';
-import { loadGeminiEmbeddingProvider } from '../rag/providers/gemini-embeddings';
+import { createEmbeddingProvider } from '../rag/providers/factory';
 import { processDocument } from './process-document';
 
-// Processes a registered document with the real database and the approved Gemini embeddings.
+// Processes a registered document with the real database and the configured embeddings (spec 012).
 async function processWithDefaultDependencies(documentId: string): Promise<void> {
   const pool = getPool();
+  const ai = loadAiConfig();
   await processDocument(documentId, {
     documents: createPostgresDocumentRepository(pool),
     versions: createPostgresVersionRepository(pool),
     chunks: createPostgresChunkRepository(pool),
     publication: createPostgresPublicationRepository(pool),
-    embeddings: loadGeminiEmbeddingProvider(),
-    embeddingModel: loadAiConfig().embedding.model,
+    embeddings: createEmbeddingProvider(ai),
+    embeddingModel: ai.embedding.model,
     config: loadRagConfig(),
   });
 }
