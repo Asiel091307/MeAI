@@ -19,7 +19,7 @@ Objetivo: que comprobar una respuesta tome un clic.
 - **Citas `[n]` = fuentes numeradas, por respuesta.** RF-4.2 de la spec 001 (cita por respuesta) no cambia, y tampoco el prompt ni el parser de `gemini-generation.ts`.
 - **Visor = `<iframe>` con `#page=N`.** El resaltado del fragmento dentro del PDF con `pdfjs-dist` queda para la spec **004b**.
 
-2026-11-18 (diseño de alta fidelidad en `design_handoff_meai_interfaz/`):
+2026-11-18 (diseño de alta fidelidad en `design_handoff_meai_interfaz/`, entregado aparte y no publicado en el repositorio):
 - **El diseño manda en lo visual:** colores, tipografía, medidas, radios y textos son los del handoff. Esta spec se actualizó para coincidir con él.
 - **Chips de cita al final de la respuesta.** Tienen el aspecto de los chips del diseño, pero van juntos al final del texto, no frase a frase. Así se respeta la cita por respuesta.
 - **Lo que no tiene backend todavía se oculta hasta su spec:** Espacios y modo sensible (008), Historial y Línea de tiempo (005), modo Recordar (007), "No recuerdo" con fragmentos cercanos, aclaración y reformulaciones (006), etapas, resumen y etiquetas (009), "Sobre mí" (010), además de Regenerar, valoraciones, título editable, notas rápidas y preguntas de ejemplo. Nada se simula.

@@ -5,3 +5,9 @@ node_modules/
 .env*.local
 .cache/
 .next-test-*/
+
+# Personal agent tooling and the design export stay local
+.claude/
+.agents/
+skills-lock.json
+design_handoff_meai_interfaz/
