@@ -41,7 +41,7 @@ Edit `.env`: set `POSTGRES_PASSWORD` and pick **one** provider (the file has rea
 docker compose up -d
 ```
 
-Open <http://127.0.0.1:3000>. The database tables are created on first start. Stop with `docker compose down`; your documents stay in the `postgres_data` volume (`down -v` deletes them).
+Open <http://127.0.0.1:3000>. The database tables are created on first start. To try it right away, upload the fictional [`docs/demo/huerto-comunitario.pdf`](docs/demo/huerto-comunitario.pdf) and ask, for example, *¿Cada cuánto debo regar los tomates?* Stop with `docker compose down`; your documents stay in the `postgres_data` volume (`down -v` deletes them).
 
 ### Choose your AI provider
 

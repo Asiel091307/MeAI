@@ -41,7 +41,7 @@ Edita `.env`: pon una `POSTGRES_PASSWORD` y elige **un** proveedor (el archivo t
 docker compose up -d
 ```
 
-Abre <http://127.0.0.1:3000>. Las tablas se crean solas en el primer arranque.
+Abre <http://127.0.0.1:3000>. Las tablas se crean solas en el primer arranque. Para probarlo enseguida, sube el PDF ficticio [`docs/demo/huerto-comunitario.pdf`](docs/demo/huerto-comunitario.pdf) y pregunta, por ejemplo, *¿Cada cuánto debo regar los tomates?*
 
 - **Apagar:** `docker compose down`. Tus documentos se conservan en el volumen `postgres_data`; `down -v` los **borra**.
 - **Actualizar a la última versión:** `docker compose pull`, luego `docker compose up -d`.
