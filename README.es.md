@@ -8,7 +8,7 @@
 
 MeAI es una aplicación **RAG** (*Retrieval-Augmented Generation*) pequeña y legible, hecha para aprender cómo funciona un RAG de principio a fin. Subes tus PDF, MeAI los indexa en PostgreSQL con pgvector, y cada respuesta se escribe solo a partir de los fragmentos recuperados. La respuesta aparece poco a poco y trae citas que puedes abrir. Si tus documentos no contienen la respuesta, lo dice en lugar de inventarla.
 
-Usa tu propia base de datos y tu propio proveedor de IA: **Gemini**, **OpenAI**, **Ollama 100 % local** o cualquier servicio compatible con OpenAI (OpenRouter, Groq, LM Studio…).
+Usa tu propia base de datos y tu propio proveedor de IA: **Gemini**, **OpenAI** o cualquier servicio compatible con OpenAI (OpenRouter, Groq…). Solo necesitas una clave de API.
 
 [Read in English](README.md)
 
@@ -52,14 +52,13 @@ Abre <http://127.0.0.1:3000>. Las tablas se crean solas en el primer arranque. P
 | --- | --- | --- |
 | **Gemini** (predeterminado) | `GEMINI_API_KEY`, gratis en [Google AI Studio](https://aistudio.google.com/apikey) | En el nivel gratuito, Google puede usar el texto enviado (fragmentos y preguntas) para mejorar sus productos. Con facturación activa (`GEMINI_TIER=paid`), no lo usa. |
 | **OpenAI** | `EMBEDDING_PROVIDER=openai-compatible`, `GENERATION_PROVIDER=openai-compatible` y `OPENAI_API_KEY` | El texto se envía a OpenAI según sus condiciones. |
-| **Ollama, 100 % local** | Opción 3 de `.env.example`, luego `docker compose --profile ollama up -d` y descargar los dos modelos | Nada sale de tu equipo. Los modelos pequeños necesitan unos 4 GB de RAM. |
 | **Otro compatible con OpenAI** | `GENERATION_BASE_URL`, `GENERATION_API_KEY` y `GENERATION_MODEL` (y lo mismo para embeddings) | Depende del servicio. |
 
-Embeddings y generación se configuran por separado (`EMBEDDING_*` y `GENERATION_*`). Por ejemplo, puedes calcular los embeddings en local con Ollama y responder con Gemini.
+Embeddings y generación se configuran por separado (`EMBEDDING_*` y `GENERATION_*`). Por ejemplo, puedes calcular los embeddings con Gemini y responder con un modelo de OpenRouter.
 
 El pie de la Biblioteca muestra el proveedor y un punto de color:
 
-- **Verde:** proveedor local o de pago.
+- **Verde:** proveedor de pago o local.
 - **Ámbar:** nivel gratuito o servicio externo.
 - **Terracota:** falta una clave.
 

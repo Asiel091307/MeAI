@@ -16,9 +16,9 @@ Fuente: [`spec.md`](./spec.md). Primero los tests, luego el código. Solo el int
 - [x] T012-05. **B.** La búsqueda solo usa versiones del modelo actual, y se cuentan los documentos con otro modelo. **RF-012-4.**
 - [x] T012-06. **B.** `DATABASE_URL` en el pool. **RF-012-5.**
 - [x] T012-07. **C.** Scripts `build` y `start`, y `Dockerfile` de producción sin root con los idiomas de OCR incluidos. **RF-012-6.**
-- [x] T012-08. **C.** `compose.yaml` con la imagen publicada y el perfil `ollama`, plantillas `.env.example` por proveedor y `LICENSE` MIT. **RF-012-5, RF-012-6.**
+- [x] T012-08. **C.** `compose.yaml` con la imagen publicada (sin perfil `ollama`, cambio del 2026-11-18), plantillas `.env.example` por proveedor y `LICENSE` MIT. **RF-012-5, RF-012-6.**
 - [x] T012-09. **C.** GitHub Actions: CI de tests y publicación de la imagen en GHCR (amd64 y arm64). **RF-012-6.**
 - [x] T012-10. **I.** Fábrica de proveedores conectada al procesamiento y al chat, y `GET /api/settings`. **RF-012-1, RF-012-2.**
 - [x] T012-11. **I.** Pie dinámico de proveedor y privacidad, y avisos de configuración y de reindexado. **RF-012-2, RF-012-4.**
-- [ ] T012-12. **I.** `README.md` en inglés y `README.es.md`, con capturas. **RF-012-6.**
-- [ ] T012-13. **I.** Verificar `pnpm build`, la imagen de producción de punta a punta y la suite completa.
+- [x] T012-12. **I.** `README.md` en inglés y `README.es.md`, con capturas. **RF-012-6.**
+- [x] T012-13. **I.** Verificar `pnpm build`, la imagen de producción de punta a punta y la suite completa.

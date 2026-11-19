@@ -8,7 +8,7 @@
 
 MeAI is a small, readable **RAG** (*Retrieval-Augmented Generation*) application built to learn how RAG works end to end. You upload PDFs, MeAI indexes them in PostgreSQL with pgvector, and every answer is written only from the retrieved passages, streamed as it is generated, with citations you can open. When your documents do not contain the answer, MeAI says so instead of making one up.
 
-Bring your own database and your own AI provider: **Gemini**, **OpenAI**, a **100 % local Ollama**, or any OpenAI-compatible service (OpenRouter, Groq, LM Studio…).
+Bring your own database and your own AI provider: **Gemini**, **OpenAI**, or any OpenAI-compatible service (OpenRouter, Groq…). All you need is an API key.
 
 [Leer en español](README.es.md)
 
@@ -49,10 +49,9 @@ Open <http://127.0.0.1:3000>. The database tables are created on first start. To
 | --- | --- | --- |
 | **Gemini** (default) | `GEMINI_API_KEY` from [Google AI Studio](https://aistudio.google.com/apikey) | Free tier: Google may use the text sent (chunks and questions) to improve its products. With billing enabled (`GEMINI_TIER=paid`) it does not. |
 | **OpenAI** | `EMBEDDING_PROVIDER=openai-compatible`, `GENERATION_PROVIDER=openai-compatible`, `OPENAI_API_KEY` | Text is sent to OpenAI under its terms. |
-| **Ollama, 100 % local** | Option 3 of `.env.example`, then `docker compose --profile ollama up -d` and pull the two models | Nothing leaves your machine. Needs ~4 GB of RAM for the small models. |
 | **Other OpenAI-compatible** | `GENERATION_BASE_URL`, `GENERATION_API_KEY`, `GENERATION_MODEL` (and the same for embeddings) | Depends on the service. |
 
-Embeddings and generation are configured separately (`EMBEDDING_*` and `GENERATION_*`), so you can, for example, embed locally with Ollama and answer with Gemini. The library footer shows the provider and a dot: green (local or paid), amber (free tier or external service), terracotta (a key is missing).
+Embeddings and generation are configured separately (`EMBEDDING_*` and `GENERATION_*`), so you can, for example, embed with Gemini and answer with an OpenRouter model. The library footer shows the provider and a dot: green (paid or local), amber (free tier or external service), terracotta (a key is missing).
 
 Changing the embedding model or its dimensions makes previous vectors incomparable: MeAI keeps searching only the documents indexed with the current model and tells you how many need **reprocessing**.
 

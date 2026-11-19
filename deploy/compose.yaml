@@ -57,15 +57,6 @@ services:
       interval: 5s
       timeout: 3s
       retries: 12
-  # Optional local AI: `docker compose --profile ollama up -d`.
-  # Reachable from the app as http://ollama:11434/v1 (no host port is published).
-  ollama:
-    image: ollama/ollama:latest
-    profiles: ["ollama"]
-    restart: unless-stopped
-    volumes:
-      - ollama_data:/root/.ollama
 
 volumes:
   postgres_data:
-  ollama_data:

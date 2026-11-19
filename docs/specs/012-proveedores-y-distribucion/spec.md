@@ -78,14 +78,19 @@ Criterios de aceptación EARS:
 - El proyecto deberá tener los scripts `build` (`next build`) y `start` (`next start`), y la imagen Docker deberá ejecutar la versión de producción con un usuario sin privilegios, incluyendo los idiomas de OCR para funcionar sin red.
 - Al hacer push a `main` o una etiqueta `v*`, GitHub Actions deberá publicar la imagen `ghcr.io/asiel091307/meai` para `linux/amd64` y `linux/arm64`.
 - En cada push y pull request, GitHub Actions deberá ejecutar lint, typecheck, los tests unitarios y los de integración.
-- Bastará con `compose.yaml` y un `.env` para arrancar la imagen publicada. El perfil opcional `ollama` deberá levantar Ollama para usar IA 100 % local.
+- Bastará con `compose.yaml` y un `.env` con una clave de API para arrancar la imagen publicada. La instalación no descarga modelos de IA.
 - El repositorio deberá incluir `LICENSE` (MIT), `README.md` en inglés y `README.es.md` en español, con el inicio rápido por proveedor, la privacidad y el aviso de que MeAI es de un solo usuario y sin autenticación, por lo que no debe exponerse a internet.
+
+## Cambio del 2026-11-18: sin Ollama en la instalación
+
+A petición del usuario, la instalación debe ser rápida y sencilla, solo con una clave de API: se quitan el perfil `ollama` de Compose y su plantilla de `.env.example`. El adaptador compatible con OpenAI sigue aceptando cualquier URL, incluidos servicios locales que la persona ya tenga, pero MeAI no los instala ni los documenta como opción principal.
 
 ## Fuera de alcance
 
 - Una pantalla para introducir claves desde la interfaz (se configura en `.env`).
 - Proveedores con API propia no compatible con OpenAI, como Anthropic o Cohere, salvo a través de un servicio compatible.
 - Usuarios, autenticación y despliegue público.
+- Instalar o descargar modelos de IA locales (Ollama u otros).
 - Migrar automáticamente los vectores de un modelo a otro: se reprocesa.
 
 ## Tests
@@ -101,4 +106,4 @@ Criterios de aceptación EARS:
   - conteo de documentos con otro modelo;
   - `DATABASE_URL`;
   - `/api/settings` sin claves.
-- **Distribución:** `pnpm build` en verde y la imagen de producción probada de punta a punta con Gemini y, si se aprueba la descarga de modelos, con Ollama.
+- **Distribución:** `pnpm build` en verde y la imagen de producción probada de punta a punta con Gemini.
