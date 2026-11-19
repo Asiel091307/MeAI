@@ -84,7 +84,8 @@ export function MessageItem({ turn, activeCitation, onSelectCitation, onShowEvid
   return (
     <div className="turn" data-role="assistant">
       <div className="answer">
-        {turn.content}
+        {/* Trailing line breaks from the model would push the chips to their own line. */}
+        {turn.content.trimEnd()}
         {citations.map((citation, index) => {
           const name = citation.documentName ?? citation.documentId;
           const available = citation.available !== false;

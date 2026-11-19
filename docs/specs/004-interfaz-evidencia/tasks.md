@@ -52,9 +52,9 @@ Columna **Carril**: **I** = integrador (archivos compartidos), **A** = datos y c
 
 ## 7. Cierre (integrador)
 
-- [ ] T004-15. **I.** Relacionar cada RF-004 con sus tests (`verificacion.md` de la 004) y revisar a mano en la app real: subir un PDF, preguntar, pulsar `[n]` y ver la página correcta en el visor.
+- [x] T004-15. **I.** Relacionar cada RF-004 con sus tests (`verificacion.md` de la 004) y revisar a mano en la app real: subir un PDF, preguntar, pulsar `[n]` y ver la página correcta en el visor.
   Hecho cuando: todos los RF-004 tienen al menos un test y la revisión manual se documenta.
-- [ ] T004-16. **I.** Ejecutar `pnpm lint`, `pnpm typecheck`, `pnpm test` y `pnpm test:integration`.
+- [x] T004-16. **I.** Ejecutar `pnpm lint`, `pnpm typecheck`, `pnpm test` y `pnpm test:integration`.
   Hecho cuando: todos terminan en verde sin dependencias nuevas en `package.json`.
 
 ## Dependencias y paralelismo

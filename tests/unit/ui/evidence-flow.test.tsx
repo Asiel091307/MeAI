@@ -110,6 +110,19 @@ test('an answer without evidence shows the "No recuerdo" card and no chips', asy
   expect(screen.queryByRole('button', { name: /^Fuente / })).toBeNull();
 });
 
+test('chips stay on the last line of the answer even when the model ends with a line break', async () => {
+  const withNewline = twoSourceAnswer.map((event) =>
+    event.type === 'final' ? { ...event, text: `${(event as { text: string }).text}\n\n` } : event,
+  );
+  render(<AppShell fetchFn={mockApi({ documents: [documentItem()], chatEvents: withNewline }).fetchFn} />);
+  await screen.findByRole('article', { name: 'becas.pdf' });
+  fireEvent.change(screen.getByLabelText('Escribe tu pregunta'), { target: { value: '¿Cuándo?' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Enviar pregunta' }));
+
+  const chip = await screen.findByRole('button', { name: 'Fuente 1: becas.pdf, página 3' });
+  expect(chip.previousSibling?.textContent).toBe('La solicitud se presenta en septiembre.');
+});
+
 test('the similarity is the score as a rounded percentage, and 0 when it is missing', () => {
   expect(similarityPercent(0.8734)).toBe(87);
   expect(similarityPercent(1.2)).toBe(100);
