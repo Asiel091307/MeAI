@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Lint, typecheck, unit tests and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+      - name: Enable pnpm 10.17.1 through corepack
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.17.1 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+
+  integration:
+    name: Integration tests
+    needs: checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+      - name: Enable pnpm 10.17.1 through corepack
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.17.1 --activate
+      - run: pnpm install --frozen-lockfile
+      # Needs Docker (PostgreSQL with pgvector, Compose); no secrets: the Gemini smoke test skips without a key.
+      - run: pnpm test:integration

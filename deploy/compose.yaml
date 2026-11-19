@@ -1,0 +1,71 @@
+# End-user compose file: download only this file and a .env next to it, then run
+# `docker compose up -d`. It never builds; it uses the image published on GHCR.
+services:
+  app:
+    # `missing` pulls once and then reuses the local image: a restart never changes the version.
+    # Update on purpose with `docker compose pull`. (`always` would re-pull on every `up`.)
+    pull_policy: missing
+    image: ghcr.io/asiel091307/meai:latest
+    # Start again by itself after Docker Desktop or the PC restarts.
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: meai
+      DB_USER: meai
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your environment}
+      # Own PostgreSQL with pgvector (optional; when set it replaces the DB_* values).
+      DATABASE_URL: ${DATABASE_URL:-}
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-gemini}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-gemini-embedding-001}
+      EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-1536}
+      EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL:-}
+      EMBEDDING_API_KEY: ${EMBEDDING_API_KEY:-}
+      GENERATION_PROVIDER: ${GENERATION_PROVIDER:-gemini}
+      GENERATION_MODEL: ${GENERATION_MODEL:-gemini-3.5-flash-lite}
+      GENERATION_BASE_URL: ${GENERATION_BASE_URL:-}
+      GENERATION_API_KEY: ${GENERATION_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_TIER: ${GEMINI_TIER:-}
+      CHUNK_SIZE: ${CHUNK_SIZE:-}
+      CHUNK_OVERLAP: ${CHUNK_OVERLAP:-}
+      RETRIEVAL_TOP_K: ${RETRIEVAL_TOP_K:-}
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      start_period: 60s
+      retries: 12
+  db:
+    image: pgvector/pgvector:0.8.1-pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: meai
+      POSTGRES_USER: meai
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your environment}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U meai -d meai"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+  # Optional local AI: `docker compose --profile ollama up -d`.
+  # Reachable from the app as http://ollama:11434/v1 (no host port is published).
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["ollama"]
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+
+volumes:
+  postgres_data:
+  ollama_data:

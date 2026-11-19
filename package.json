@@ -5,6 +5,8 @@
   "packageManager": "pnpm@10.17.1",
   "scripts": {
     "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "migrate": "node scripts/migrate.mjs",
     "lint": "tsc --noEmit --noUnusedLocals --noUnusedParameters",
     "typecheck": "tsc --noEmit",
