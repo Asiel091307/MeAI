@@ -26,6 +26,8 @@ test('a document use case can depend on persistence types without React or HTTP'
     documentId: document.id,
     status: 'processing',
     createdAt: document.createdAt,
+    embeddingModel: 'test-model',
+    embeddingDimensions: 3,
   };
   const chunk: Chunk = {
     id: 'chunk-1', documentId: document.id, versionId: version.id,
@@ -54,7 +56,7 @@ test('a document use case can depend on persistence types without React or HTTP'
   expect(created.pdfBytes).toEqual(bytes);
   expect(await documents.findById(document.id)).toEqual(document);
   expect(await documents.list()).toEqual([expect.not.objectContaining({ pdfBytes: bytes })]);
-  expect((await versions.create(document.id)).documentId).toBe(document.id);
+  expect((await versions.create(document.id, 'test-model')).documentId).toBe(document.id);
   expect((await chunks.findByVersion(version.id))[0]).toMatchObject({
     documentId: document.id, versionId: version.id, page: 1,
   });

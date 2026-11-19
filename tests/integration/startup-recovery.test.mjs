@@ -21,7 +21,7 @@ test('startup recovery fails an interrupted document, keeps an available one que
       name: 'interrumpido.pdf',
       pdfBytes: createTextPdf(['Texto que nunca se publico.']),
     });
-    const attempt = await env.processingDeps.versions.create(interrupted.id);
+    const attempt = await env.processingDeps.versions.create(interrupted.id, env.processingDeps.embeddingModel);
     await env.processingDeps.chunks.save(interrupted.id, attempt.id, [
       { page: 1, position: 1, text: 'Texto que nunca se publico.', embedding: await wordEmbeddings.embed('x') },
     ]);

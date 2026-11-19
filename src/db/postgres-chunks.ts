@@ -36,12 +36,20 @@ export function createPostgresChunkRepository(pool: Pool): ChunkRepository {
   return {
     async save(documentId, versionId, chunks) {
       if (chunks.length === 0) return;
+      const dimensions = chunks[0].embedding.length;
+      if (chunks.some((chunk) => chunk.embedding.length !== dimensions)) {
+        throw new Error('All embeddings of a version must have the same number of dimensions.');
+      }
       // One transaction: a version never keeps only part of its chunks.
       // RAG note: the embedding is stored in the same row as its text, so a vector
       // search that finds a chunk also returns the text and page to cite.
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
+        await client.query('UPDATE document_versions SET embedding_dimensions = $2 WHERE id = $1', [
+          versionId,
+          dimensions,
+        ]);
         for (const chunk of chunks) {
           await client.query(
             `INSERT INTO chunks (document_id, version_id, page, position, text, embedding)

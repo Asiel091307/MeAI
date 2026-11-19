@@ -28,11 +28,13 @@ function createDeps(overrides: Partial<ProcessDocumentDeps> = {}) {
   const deps: ProcessDocumentDeps = {
     documents: { findById: async (id) => (id === document.id ? document : null) },
     versions: {
-      create: async (documentId) => ({
+      create: async (documentId, embeddingModel) => ({
         id: 'version-1',
         documentId,
         status: 'processing',
         createdAt: new Date('2026-01-01T00:00:00Z'),
+        embeddingModel,
+        embeddingDimensions: null,
       }),
     },
     chunks: {
@@ -54,6 +56,7 @@ function createDeps(overrides: Partial<ProcessDocumentDeps> = {}) {
         return texts.map((_, index) => [index, 0.5]);
       },
     },
+    embeddingModel: 'test-model',
     config: { chunkSize: 1000, chunkOverlap: 200, retrievalTopK: 5 },
     ...overrides,
   };
@@ -181,4 +184,21 @@ test('a missing document throws before creating a version', async () => {
 
   await expect(processDocument('missing', deps)).rejects.toThrow();
   expect(create).not.toHaveBeenCalled();
+});
+
+test('the new version records the embedding model of the dependencies', async () => {
+  const create = vi.fn(async (documentId: string, embeddingModel: string) => ({
+    id: 'version-1',
+    documentId,
+    status: 'processing' as const,
+    createdAt: new Date('2026-01-01T00:00:00Z'),
+    embeddingModel,
+    embeddingDimensions: null,
+  }));
+  extract.mockResolvedValue([{ page: 1, text: 'Texto de prueba.' }]);
+  const { deps } = createDeps({ versions: { create }, embeddingModel: 'model-x' });
+
+  await processDocument('doc-1', deps);
+
+  expect(create).toHaveBeenCalledWith('doc-1', 'model-x');
 });

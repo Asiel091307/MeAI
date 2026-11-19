@@ -18,6 +18,8 @@ export interface ProcessDocumentDeps {
   chunks: Pick<ChunkRepository, 'save'>;
   publication: Pick<DocumentPublicationRepository, 'publish' | 'fail'>;
   embeddings: DocumentEmbeddingProvider;
+  // Recorded on every new version so search can tell which model produced its vectors.
+  embeddingModel: string;
   config: RagConfig;
   ocr?: OcrProvider;
 }
@@ -70,7 +72,7 @@ export async function processDocument(
     throw new Error(`Document ${documentId} does not exist.`);
   }
 
-  const version = await deps.versions.create(documentId);
+  const version = await deps.versions.create(documentId, deps.embeddingModel);
   try {
     const pages = await extractPdfPageTexts(document.pdfBytes, { ocr: deps.ocr });
 

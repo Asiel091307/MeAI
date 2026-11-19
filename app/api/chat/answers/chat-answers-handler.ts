@@ -19,6 +19,7 @@ import {
   streamCancellableAnswer,
 } from '../../../../src/rag/answering/dependent-query-cancellation';
 import { validateQuestion } from '../../../../src/rag/answering/question-validation';
+import { loadAiConfig } from '../../../../src/rag/providers/ai-config';
 import { loadRagConfig } from '../../../../src/rag/config';
 import type { EmbeddingProvider } from '../../../../src/rag/providers/embeddings';
 import { createGeminiAnswerGenerator } from '../../../../src/rag/providers/gemini-generation';
@@ -189,7 +190,9 @@ function getDefaultChatAnswersDeps(): ChatAnswersHandlerDeps {
   return {
     documents: createPostgresDocumentRepository(pool),
     embeddings: loadGeminiEmbeddingProvider(),
-    search: createPostgresSearchRepository(pool),
+    search: createPostgresSearchRepository(pool, {
+      embeddingModel: loadAiConfig().embedding.model,
+    }),
     generator: createGeminiAnswerGenerator(),
     topK: config.retrievalTopK,
     guard: defaultGuard,

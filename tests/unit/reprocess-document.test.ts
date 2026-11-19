@@ -41,9 +41,16 @@ function createDeps(startResult: StartReprocessingResult) {
       },
     },
     versions: {
-      create: async (documentId) => {
+      create: async (documentId, embeddingModel) => {
         calls.versionsCreated += 1;
-        return { id: 'version-2', documentId, status: 'processing', createdAt: new Date() };
+        return {
+          id: 'version-2',
+          documentId,
+          status: 'processing',
+          createdAt: new Date(),
+          embeddingModel,
+          embeddingDimensions: null,
+        };
       },
     },
     chunks: { save: async () => {} },
@@ -54,6 +61,7 @@ function createDeps(startResult: StartReprocessingResult) {
       fail: async () => {},
     },
     embeddings: { embedDocuments: async (texts) => texts.map(() => [1, 0]) },
+    embeddingModel: 'test-model',
     config: { chunkSize: 1000, chunkOverlap: 200, retrievalTopK: 5 },
   };
   return { deps, calls };

@@ -12,6 +12,7 @@ const migrations = [
   '002_create_document_versions.sql',
   '003_create_chunks.sql',
   '004_add_chunk_embeddings.sql',
+  '005_flexible_embeddings.sql',
 ];
 
 async function withDatabase(run) {
@@ -71,25 +72,19 @@ async function seedVersion(pool) {
   return { documentId: documents[0].id, versionId: versions[0].id };
 }
 
-const insertWithEmbedding =
-  'INSERT INTO chunks (document_id, version_id, page, position, text, embedding) VALUES ($1, $2, 1, 1, $3, $4::vector)';
-
-test('the chunks table accepts 1536-dimension vectors and rejects other dimensions', async () => {
+test('the chunks table accepts vectors of any dimension', async () => {
   await withDatabase(async (pool) => {
     const { documentId, versionId } = await seedVersion(pool);
 
-    await pool.query(insertWithEmbedding, [documentId, versionId, 'ok', vectorLiteral(1536)]);
-    const { rows } = await pool.query('SELECT vector_dims(embedding) AS dims FROM chunks');
-    assert.deepEqual(rows, [{ dims: 1536 }]);
-
-    for (const dimensions of [1535, 1537]) {
-      await assert.rejects(
-        pool.query(insertWithEmbedding, [documentId, versionId, 'bad', vectorLiteral(dimensions)]),
-        /expected 1536 dimensions, not/,
+    for (const [index, dimensions] of [768, 1536].entries()) {
+      await pool.query(
+        `INSERT INTO chunks (document_id, version_id, page, position, text, embedding)
+         VALUES ($1, $2, 1, $3, 'ok', $4::vector)`,
+        [documentId, versionId, index + 1, vectorLiteral(dimensions)],
       );
     }
-    const { rows: count } = await pool.query('SELECT count(*)::int AS n FROM chunks');
-    assert.equal(count[0].n, 1);
+    const { rows } = await pool.query('SELECT vector_dims(embedding) AS dims FROM chunks ORDER BY 1');
+    assert.deepEqual(rows, [{ dims: 768 }, { dims: 1536 }]);
   });
 }, 180_000);
 

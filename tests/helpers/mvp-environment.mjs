@@ -39,6 +39,8 @@ export const wordEmbeddings = {
 };
 
 // Applies every migration in db/migrations, in order, like `pnpm migrate`.
+export const TEST_EMBEDDING_MODEL = 'test-embedding-model';
+
 async function migrate(pool) {
   const directory = new URL('../../db/migrations/', import.meta.url);
   const files = (await readdir(directory)).filter((name) => name.endsWith('.sql')).sort();
@@ -81,6 +83,7 @@ export async function startMvpEnvironment({ applyMigrations = true } = {}) {
     publication: createPostgresPublicationRepository(pool),
     reprocessing: createPostgresReprocessingRepository(pool),
     embeddings: wordEmbeddings,
+    embeddingModel: TEST_EMBEDDING_MODEL,
     config: DEFAULT_RAG_CONFIG,
   };
 
@@ -88,7 +91,7 @@ export async function startMvpEnvironment({ applyMigrations = true } = {}) {
     pool,
     documents,
     processingDeps,
-    search: createPostgresSearchRepository(pool),
+    search: createPostgresSearchRepository(pool, { embeddingModel: TEST_EMBEDDING_MODEL }),
     async stop() {
       await pool.end();
       await exec('docker', ['stop', container], { timeout: 30_000 });

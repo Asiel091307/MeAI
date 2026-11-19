@@ -20,6 +20,7 @@ const MIGRATIONS = [
   '002_create_document_versions.sql',
   '003_create_chunks.sql',
   '004_add_chunk_embeddings.sql',
+  '005_flexible_embeddings.sql',
 ];
 
 // Deterministic stand-in for Gemini: same text, same unit vector of 1536 values.

@@ -14,6 +14,7 @@ const migrations = [
   '002_create_document_versions.sql',
   '003_create_chunks.sql',
   '004_add_chunk_embeddings.sql',
+  '005_flexible_embeddings.sql',
 ];
 const notFoundReason = 'El documento no existe o ya fue eliminado.';
 const errorReason = 'No se pudo eliminar el documento. No se borró nada; inténtalo de nuevo.';
