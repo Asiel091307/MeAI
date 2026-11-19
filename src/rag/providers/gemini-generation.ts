@@ -3,92 +3,28 @@ import type {
   AnswerGenerator,
   AnswerSource,
 } from './generation';
+import {
+  buildGroundedUserPrompt,
+  CitationFilter,
+  GROUNDED_SYSTEM_INSTRUCTION,
+  NO_EVIDENCE_MESSAGE,
+} from './grounded-prompt';
 
-export const NO_EVIDENCE_MESSAGE =
-  'El contexto recuperado no contiene información suficiente para responder a la pregunta.';
+export { NO_EVIDENCE_MESSAGE };
 
-const SYSTEM_INSTRUCTION = `Eres MeAI, un asistente RAG educativo y riguroso.
-Tu función es responder a la pregunta del usuario utilizando EXCLUSIVAMENTE la evidencia documental explícita de los fragmentos recuperados vigentes que se te proporcionan.
-
-Reglas innegociables:
-1. Responde siempre en español.
-2. Basa tus afirmaciones únicamente en el contenido de los fragmentos. No agregues conocimiento general, ni suposiciones, ni información no respaldada por ellos.
-3. Si los fragmentos recuperados no contienen información suficiente o relevante para responder con certeza a la pregunta, responde EXACTAMENTE:
-"${NO_EVIDENCE_MESSAGE}"
-No agregues explicaciones adicionales, ni disculpas, ni citas en ese caso.
-4. Si los fragmentos contienen información suficiente, redacta una respuesta clara y fundamentada. Al final de tu respuesta, en una línea separada, lista los identificadores de los fragmentos que respaldaron directamente tu respuesta con este formato exacto:
-[FUENTES: id1, id2]`;
+const DEFAULT_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
 
 export interface GeminiGeneratorOptions {
   apiKey?: string;
   model?: string;
   fetch?: typeof fetch;
-}
-
-const COMPLETE_CITATION_PATTERN = /\n?\[(?:FUENTES|CITAS):\s*([^\]]*)\]/gi;
-const OPEN_CITATION_PATTERN = /\n?\[(?:FUENTES|CITAS):/i;
-
-function findTrailingPartialCitationPrefix(text: string): number {
-  const lastBracket = text.lastIndexOf('[');
-  if (lastBracket === -1) {
-    return -1;
-  }
-
-  const tail = text.slice(lastBracket).toLowerCase();
-  if ('[fuentes:'.startsWith(tail) || '[citas:'.startsWith(tail)) {
-    return lastBracket > 0 && text[lastBracket - 1] === '\n' ? lastBracket - 1 : lastBracket;
-  }
-
-  return -1;
-}
-
-function consumeCitationList(rawList: string, validIds: Set<string>, target: string[]): void {
-  for (const item of rawList.split(',')) {
-    const id = item.trim();
-    if (validIds.has(id) && !target.includes(id)) {
-      target.push(id);
-    }
-  }
-}
-
-function drainPendingBuffer(
-  pendingBuffer: string,
-  validIds: Set<string>,
-  collectedCitations: string[],
-  isFinal: boolean,
-): { emitText: string; remainingBuffer: string } {
-  let working = pendingBuffer.replace(COMPLETE_CITATION_PATTERN, (_fullMatch, group1: string) => {
-    consumeCitationList(group1, validIds, collectedCitations);
-    return '';
-  });
-
-  const openMatch = OPEN_CITATION_PATTERN.exec(working);
-  if (openMatch) {
-    const before = working.slice(0, openMatch.index);
-    if (isFinal) {
-      const unclosedList = working.slice(openMatch.index + openMatch[0].length);
-      consumeCitationList(unclosedList, validIds, collectedCitations);
-      return { emitText: before, remainingBuffer: '' };
-    }
-    return { emitText: before, remainingBuffer: working.slice(openMatch.index) };
-  }
-
-  if (!isFinal) {
-    const partialIndex = findTrailingPartialCitationPrefix(working);
-    if (partialIndex !== -1) {
-      return {
-        emitText: working.slice(0, partialIndex),
-        remainingBuffer: working.slice(partialIndex),
-      };
-    }
-  }
-
-  return { emitText: working, remainingBuffer: '' };
+  baseUrl?: string;
 }
 
 export function createGeminiAnswerGenerator(options: GeminiGeneratorOptions = {}): AnswerGenerator {
   const fetchFn = options.fetch ?? globalThis.fetch;
   const apiKey = options.apiKey ?? process.env.GEMINI_API_KEY ?? '';
+  const baseUrl = options.baseUrl ?? DEFAULT_BASE_URL;
   const model = options.model ?? process.env.GENERATION_MODEL ?? 'gemini-3.5-flash-lite';
 
   return {
@@ -99,14 +35,9 @@ export function createGeminiAnswerGenerator(options: GeminiGeneratorOptions = {}
         return;
       }
 
-      const validIds = new Set(sources.map((s) => s.id));
-      const formattedSources = sources
-        .map((s, idx) => `[Fragmento ${idx + 1} (id: ${s.id}, doc: ${s.documentId}, pág: ${s.page})]:\n${s.text}`)
-        .join('\n\n');
+      const userPrompt = buildGroundedUserPrompt(question, sources);
 
-      const userPrompt = `Pregunta del usuario:\n${question}\n\nFragmentos recuperados vigentes:\n${formattedSources}`;
-
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`;
+      const url = `${baseUrl}/models/${model}:streamGenerateContent?alt=sse`;
       const response = await fetchFn(url, {
         method: 'POST',
         headers: {
@@ -115,7 +46,7 @@ export function createGeminiAnswerGenerator(options: GeminiGeneratorOptions = {}
         },
         body: JSON.stringify({
           system_instruction: {
-            parts: [{ text: SYSTEM_INSTRUCTION }],
+            parts: [{ text: GROUNDED_SYSTEM_INSTRUCTION }],
           },
           contents: [
             {
@@ -133,10 +64,7 @@ export function createGeminiAnswerGenerator(options: GeminiGeneratorOptions = {}
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let sseBuffer = '';
-      let pendingTextBuffer = '';
-      let accumulatedText = '';
-      let emittedAnyText = false;
-      const collectedCitations: string[] = [];
+      const filter = new CitationFilter(sources);
 
       const parseSseLine = (line: string): string | null => {
         const trimmed = line.trim();
@@ -151,6 +79,7 @@ export function createGeminiAnswerGenerator(options: GeminiGeneratorOptions = {}
         }
       };
 
+      let trailing = '';
       try {
         while (true) {
           const { done, value } = await reader.read();
@@ -164,49 +93,25 @@ export function createGeminiAnswerGenerator(options: GeminiGeneratorOptions = {}
             const partText = parseSseLine(line);
             if (!partText) continue;
 
-            accumulatedText += partText;
-            pendingTextBuffer += partText;
-
-            const drained = drainPendingBuffer(pendingTextBuffer, validIds, collectedCitations, false);
-            pendingTextBuffer = drained.remainingBuffer;
-            if (drained.emitText) {
-              emittedAnyText = true;
-              yield { type: 'text', text: drained.emitText };
-            }
+            const clean = filter.push(partText);
+            if (clean) yield { type: 'text', text: clean };
           }
         }
 
         if (sseBuffer.trim()) {
-          const partText = parseSseLine(sseBuffer);
-          if (partText) {
-            accumulatedText += partText;
-            pendingTextBuffer += partText;
-          }
+          trailing = parseSseLine(sseBuffer) ?? '';
         }
       } finally {
         reader.releaseLock();
       }
 
-      const finalDrain = drainPendingBuffer(pendingTextBuffer, validIds, collectedCitations, true);
-      if (finalDrain.emitText) {
-        emittedAnyText = true;
-        yield { type: 'text', text: finalDrain.emitText };
+      const result = filter.finish(trailing);
+      if (result.text) yield { type: 'text', text: result.text };
+
+      if (result.noEvidence && !result.emittedAnyText) {
+        yield { type: 'text', text: NO_EVIDENCE_MESSAGE };
       }
-
-      const isNoEvidence =
-        accumulatedText.includes(NO_EVIDENCE_MESSAGE) ||
-        accumulatedText.toLowerCase().includes('no contiene información suficiente') ||
-        accumulatedText.toLowerCase().includes('no hay información suficiente');
-
-      if (isNoEvidence) {
-        if (!emittedAnyText) {
-          yield { type: 'text', text: NO_EVIDENCE_MESSAGE };
-        }
-        yield { type: 'final', citations: [] };
-        return;
-      }
-
-      yield { type: 'final', citations: collectedCitations };
+      yield { type: 'final', citations: result.citations };
     },
   };
 }
