@@ -1,124 +1,120 @@
 # MeAI
 
-MeAI es un MVP educativo de **RAG** (*Retrieval-Augmented Generation*): subes tus PDF, se indexan en PostgreSQL con pgvector, y puedes hacer preguntas que se responden **solo** con lo que dicen tus documentos, citando el documento y la página.
+[![CI](https://github.com/Asiel091307/MeAI/actions/workflows/ci.yml/badge.svg)](https://github.com/Asiel091307/MeAI/actions/workflows/ci.yml)
+[![Image](https://github.com/Asiel091307/MeAI/actions/workflows/release.yml/badge.svg)](https://github.com/Asiel091307/MeAI/pkgs/container/meai)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-- Lee PDF con texto y PDF escaneados (OCR en español e inglés).
-- Divide el texto en fragmentos y guarda el embedding de cada uno, con Gemini `gemini-embedding-001` de 1536 dimensiones.
-- Busca los fragmentos más parecidos a tu pregunta con similitud coseno.
-- Genera la respuesta con `gemini-3.5-flash-lite`, que aparece poco a poco (*streaming*), con sus fuentes.
-- Si tus documentos no contienen la respuesta, lo dice en lugar de inventarla.
+**Ask questions about your own PDFs and get answers grounded only in them, with the page they come from.**
 
-## Requisitos
+MeAI is a small, readable **RAG** (*Retrieval-Augmented Generation*) application built to learn how RAG works end to end. You upload PDFs, MeAI indexes them in PostgreSQL with pgvector, and every answer is written only from the retrieved passages, streamed as it is generated, with citations you can open. When your documents do not contain the answer, MeAI says so instead of making one up.
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) en ejecución.
-- Una clave de la API de Gemini, gratuita en [Google AI Studio](https://aistudio.google.com/) ("Get API key").
-- Solo para desarrollo y tests: Node.js 20 o superior y pnpm 10.17.1 (`corepack enable`).
+Bring your own database and your own AI provider: **Gemini**, **OpenAI**, a **100 % local Ollama**, or any OpenAI-compatible service (OpenRouter, Groq, LM Studio…).
 
-## Puesta en marcha
+[Leer en español](README.es.md)
 
-1. Copia la plantilla de configuración:
+![MeAI: library, conversation with citations and the evidence panel](docs/images/meai-workspace.png)
 
-   ```bash
-   cp .env.example .env
-   ```
+## Features
 
-2. Rellena dos valores en `.env`, sin espacios alrededor del `=`:
+- Text PDFs and scanned PDFs (offline OCR in Spanish and English).
+- Chunking with configurable size and overlap, one embedding per chunk, cosine-similarity search in pgvector.
+- Streaming answers with `[page]` citations, an evidence panel with the exact passages and their similarity, and an in-app PDF viewer.
+- An explicit "not enough evidence" answer when the documents do not support one.
+- Reprocess or delete documents (the PDF, its chunks and its embeddings go together).
+- Embeddings and generation can use different providers. The app shows the active provider and its privacy level.
 
-   ```
-   POSTGRES_PASSWORD=una_contraseña_local
-   GEMINI_API_KEY=tu_clave_de_gemini
-   ```
+## Quick start (published image)
 
-   `.env` está en `.gitignore`: nunca se sube al repositorio.
-
-3. Arranca la aplicación y la base de datos:
-
-   ```bash
-   docker compose up -d --build
-   ```
-
-4. Abre <http://127.0.0.1:3000>.
-
-Al arrancar, la aplicación crea o actualiza sola las tablas de la base de datos. No hace falta ejecutar `pnpm migrate`.
-
-Para apagarla:
+You need [Docker](https://docs.docker.com/get-docker/). No Node.js and no cloning.
 
 ```bash
-docker compose down
+mkdir meai && cd meai
+curl -fsSLo compose.yaml https://raw.githubusercontent.com/Asiel091307/MeAI/main/deploy/compose.yaml
+curl -fsSLo .env https://raw.githubusercontent.com/Asiel091307/MeAI/main/.env.example
 ```
 
-Tus documentos se conservan en el volumen de Docker `postgres_data`. `docker compose down -v` los **borra**.
+On Windows PowerShell, use `curl.exe` instead of `curl`.
 
-## Cómo se usa
+Edit `.env`: set `POSTGRES_PASSWORD` and pick **one** provider (the file has ready-to-uncomment templates). Then:
 
-1. **Subir:** elige un PDF (hasta 10 MB y 100 páginas) y pulsa "Subir PDF".
-2. **Esperar:** el estado pasa de "En procesamiento" a "Disponible". Los PDF escaneados tardan más por el OCR. Si falla, verás la causa y podrás reintentar o eliminar.
-3. **Preguntar:** escribe tu pregunta (hasta 1000 caracteres). Puedes hacer preguntas de seguimiento; la conversación vive solo en la pestaña y se borra al recargar.
-4. **Mantener:** puedes reprocesar o eliminar cada documento. Eliminar borra el PDF, sus fragmentos y sus embeddings.
+```bash
+docker compose up -d
+```
 
-## Privacidad
+Open <http://127.0.0.1:3000>. The database tables are created on first start. Stop with `docker compose down`; your documents stay in the `postgres_data` volume (`down -v` deletes them).
 
-Con el **nivel gratuito** de Gemini, Google puede usar el texto que se le envía (fragmentos de tus PDF y tus preguntas) para mejorar sus productos. Usa PDF que no sean sensibles. Para documentos personales, activa la facturación en Google AI Studio con la misma clave; en el nivel de pago Google no usa tus datos para entrenar modelos.
+### Choose your AI provider
 
-El PDF, el texto y los embeddings se guardan solo en tu PostgreSQL local. El OCR se hace en tu máquina.
-
-## Parámetros ajustables
-
-En `.env`; si los dejas vacíos se usan los valores predeterminados.
-
-| Variable | Valor por defecto | Qué controla |
+| Option | What to set in `.env` | Privacy |
 | --- | --- | --- |
-| `CHUNK_SIZE` | `1000` | Caracteres por fragmento |
-| `CHUNK_OVERLAP` | `200` | Caracteres compartidos entre fragmentos seguidos |
-| `RETRIEVAL_TOP_K` | `5` | Fragmentos usados como evidencia en cada respuesta |
+| **Gemini** (default) | `GEMINI_API_KEY` from [Google AI Studio](https://aistudio.google.com/apikey) | Free tier: Google may use the text sent (chunks and questions) to improve its products. With billing enabled (`GEMINI_TIER=paid`) it does not. |
+| **OpenAI** | `EMBEDDING_PROVIDER=openai-compatible`, `GENERATION_PROVIDER=openai-compatible`, `OPENAI_API_KEY` | Text is sent to OpenAI under its terms. |
+| **Ollama, 100 % local** | Option 3 of `.env.example`, then `docker compose --profile ollama up -d` and pull the two models | Nothing leaves your machine. Needs ~4 GB of RAM for the small models. |
+| **Other OpenAI-compatible** | `GENERATION_BASE_URL`, `GENERATION_API_KEY`, `GENERATION_MODEL` (and the same for embeddings) | Depends on the service. |
 
-Tras cambiarlos, reinicia con `docker compose up -d` y reprocesa los documentos para aplicar el nuevo tamaño.
+Embeddings and generation are configured separately (`EMBEDDING_*` and `GENERATION_*`), so you can, for example, embed locally with Ollama and answer with Gemini. The library footer shows the provider and a dot: green (local or paid), amber (free tier or external service), terracotta (a key is missing).
 
-## Desarrollo y tests
+Changing the embedding model or its dimensions makes previous vectors incomparable: MeAI keeps searching only the documents indexed with the current model and tells you how many need **reprocessing**.
 
-```bash
-pnpm install
-```
+### Your own PostgreSQL
 
-```bash
-pnpm lint
-```
+Set `DATABASE_URL=postgresql://user:password@host:5432/db` to use your own PostgreSQL 15+ with the `vector` extension available. MeAI applies its migrations on start.
 
-```bash
-pnpm typecheck
-```
+> **Single user, no authentication.** MeAI has no login. Keep it on `127.0.0.1` (the compose files already do) and do not expose it to the internet.
+
+## Run from source
 
 ```bash
-pnpm test
+git clone https://github.com/Asiel091307/MeAI.git && cd MeAI
+cp .env.example .env   # set POSTGRES_PASSWORD and your provider
+docker compose up -d --build
 ```
 
-```bash
-pnpm test:integration
-```
+For development: Node.js 20+, `corepack enable` (pnpm 10.17.1), then:
 
-- `pnpm test` ejecuta los tests unitarios: lógica RAG con proveedores simulados e interfaz con happy-dom.
-- `pnpm test:integration` usa PostgreSQL con pgvector real en Docker, OCR real y, si existe `GEMINI_API_KEY`, una llamada real a Gemini. Necesita Docker Desktop y el puerto 3000 libre.
-- `pnpm migrate` aplica las migraciones a la base de Docker Compose a mano. Es opcional, porque la aplicación ya lo hace al arrancar.
-
-## Estructura
-
-| Carpeta | Contenido |
+| Command | What it does |
 | --- | --- |
-| `app/`, `components/` | Interfaz y rutas HTTP (`app/api/`) |
-| `src/rag/` | Ingestión (PDF, OCR, fragmentos), búsqueda, respuestas y proveedores de IA |
-| `src/documents/` | Casos de uso: registrar, procesar, reprocesar y eliminar |
-| `src/db/`, `db/migrations/` | SQL directo y migraciones versionadas |
-| `docs/` | Constitución, specs, tareas y verificación del MVP |
+| `pnpm install` | Install dependencies |
+| `pnpm dev` | Next.js in development mode (needs the `db` service) |
+| `pnpm lint`, `pnpm typecheck` | Static checks |
+| `pnpm test` | Unit tests: RAG logic with fake providers and UI with happy-dom |
+| `pnpm test:integration` | Real PostgreSQL + pgvector in Docker, real OCR, and a real Gemini call when `GEMINI_API_KEY` is set (port 3000 must be free) |
+| `pnpm build`, `pnpm start` | Production build and server |
 
-Las decisiones del proyecto están en [`docs/specs/`](docs/specs/). La relación entre cada criterio y sus tests está en [`docs/specs/001-meai-mvp/verificacion.md`](docs/specs/001-meai-mvp/verificacion.md).
+## How it works
 
-## Problemas frecuentes
+```
+PDF ──► text per page (pdf.js, or Tesseract OCR) ──► chunks (size / overlap)
+    ──► embeddings ──► PostgreSQL + pgvector
 
-| Síntoma | Causa y solución |
+Question ──► embedding ──► top-K nearest chunks (cosine) ──► grounded prompt
+         ──► streamed answer + validated [FUENTES: …] citations ──► UI
+```
+
+| Folder | Contents |
 | --- | --- |
-| "No se pudo conectar con MeAI…" al subir o preguntar | La app no está en marcha o todavía arranca. Pasa, por ejemplo, si la pestaña seguía abierta tras reiniciar el PC o Docker. Abre Docker Desktop, ejecuta `docker compose up -d`, espera unos segundos y recarga la página. Los contenedores tienen `restart: unless-stopped`, así que vuelven solos cuando Docker arranca. |
-| Pulsas "Subir PDF" y la página se recarga sin subir nada | La página aún no terminó de cargar su JavaScript; la primera carga en modo desarrollo tarda unos segundos. Espera a que aparezca el listado de documentos y vuelve a intentarlo. |
-| Subir un PDF da error 500 y los logs (`docker compose logs app`) dicen `password authentication failed` | El volumen de la base se creó con otra contraseña: `POSTGRES_PASSWORD` solo se aplica la primera vez. Pon en la base la contraseña de tu `.env`, o borra el volumen con `docker compose down -v` si no tienes datos que conservar. |
-| Los documentos quedan "Fallido" con un error de embeddings | Falta `GEMINI_API_KEY`, la clave es inválida o se agotó la cuota gratuita. Revisa `.env`, sin espacios alrededor del `=`, y reinicia. |
-| `docker compose up` dice que el puerto 3000 está ocupado | Otro programa usa el puerto. Ciérralo o cambia el puerto en `compose.yaml`. |
-| Un PDF escaneado queda "Fallido" con "No se pudo leer texto en la página N" | El OCR no reconoció texto en esa página: manuscrito, imagen borrosa o página en blanco. |
+| `app/`, `components/` | Next.js UI and thin HTTP routes (`app/api/`) |
+| `src/rag/` | Ingestion (PDF, OCR, chunking), retrieval, answering and AI providers |
+| `src/documents/` | Use cases: register, process, reprocess, delete |
+| `src/db/`, `db/migrations/` | Plain SQL repositories and versioned migrations |
+| `docs/` | Constitution, specs and tasks (spec-driven, in Spanish) |
+
+The RAG logic never imports React or HTTP objects, and providers are plain `fetch` adapters behind small interfaces (`EmbeddingProvider`, `AnswerGenerator`). Every feature started as a spec in [`docs/specs/`](docs/specs/) with acceptance criteria and tests written first.
+
+### Tunable parameters
+
+| Variable | Default | Controls |
+| --- | --- | --- |
+| `CHUNK_SIZE` | `1000` | Characters per chunk |
+| `CHUNK_OVERLAP` | `200` | Characters shared by consecutive chunks |
+| `RETRIEVAL_TOP_K` | `5` | Chunks used as evidence per answer |
+
+Reprocess your documents after changing the chunk size.
+
+## Tech stack
+
+TypeScript · Next.js 15 · React 19 · PostgreSQL 17 + pgvector · pdf.js · Tesseract.js · Vitest · Docker Compose · GitHub Actions (CI + multi-arch image on GHCR).
+
+## License
+
+[MIT](LICENSE)
